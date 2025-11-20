@@ -3,6 +3,7 @@ package com.example.ecohand.presentation.login
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ecohand.data.repository.UserRepository
+import com.example.ecohand.data.session.UserSession
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,8 +19,11 @@ data class LoginUiState(
     val username: String = ""
 )
 
-class LoginViewModel(private val userRepository: UserRepository) : ViewModel() {
-    
+class LoginViewModel(
+    private val userRepository: UserRepository,
+    private val userSession: UserSession
+) : ViewModel() {
+
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
     
@@ -56,6 +60,10 @@ class LoginViewModel(private val userRepository: UserRepository) : ViewModel() {
             val result = userRepository.login(currentState.email, currentState.password)
             
             _uiState.value = if (result.isSuccess) {
+                val user = result.getOrNull()
+                if (user != null) {
+                    userSession.saveUserSession(user.id, user.username, user.email)
+                }
                 currentState.copy(isLoading = false, isLoginSuccessful = true)
             } else {
                 currentState.copy(
@@ -89,6 +97,10 @@ class LoginViewModel(private val userRepository: UserRepository) : ViewModel() {
             )
             
             _uiState.value = if (result.isSuccess) {
+                val userId = result.getOrNull()
+                if (userId != null) {
+                    userSession.saveUserSession(userId.toInt(), currentState.username, currentState.email)
+                }
                 currentState.copy(isLoading = false, isLoginSuccessful = true)
             } else {
                 currentState.copy(
