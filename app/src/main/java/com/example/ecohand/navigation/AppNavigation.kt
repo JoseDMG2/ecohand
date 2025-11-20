@@ -1,6 +1,7 @@
 package com.example.ecohand.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -19,10 +20,10 @@ fun AppNavigation() {
     val context = LocalContext.current
     
     // Inicializar base de datos, repositorio y sesión
-    val database = EcoHandDatabase.getDatabase(context)
-    val userRepository = UserRepository(database.userDao())
-    val userSession = UserSession.getInstance(context)
-    val loginViewModel = LoginViewModel(userRepository, userSession)
+    val database = remember { EcoHandDatabase.getDatabase(context) }
+    val userRepository = remember { UserRepository(database.userDao()) }
+    val userSession = remember { UserSession.getInstance(context) }
+    val loginViewModel = remember { LoginViewModel(userRepository, userSession) }
 
     NavHost(
         navController = navController,

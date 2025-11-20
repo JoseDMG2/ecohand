@@ -19,9 +19,11 @@ import kotlinx.coroutines.launch
         ActividadDiariaEntity::class,
         LogroEntity::class,
         LogroUsuarioEntity::class,
-        EstadisticasUsuarioEntity::class
+        EstadisticasUsuarioEntity::class,
+        SenaEntity::class,
+        PartidaJuegoEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class EcoHandDatabase : RoomDatabase() {
@@ -33,6 +35,8 @@ abstract class EcoHandDatabase : RoomDatabase() {
     abstract fun logroDao(): LogroDao
     abstract fun logroUsuarioDao(): LogroUsuarioDao
     abstract fun estadisticasUsuarioDao(): EstadisticasUsuarioDao
+    abstract fun senaDao(): SenaDao
+    abstract fun partidaJuegoDao(): PartidaJuegoDao
 
     companion object {
         @Volatile
@@ -52,6 +56,20 @@ abstract class EcoHandDatabase : RoomDatabase() {
                             INSTANCE?.let { database ->
                                 CoroutineScope(Dispatchers.IO).launch {
                                     populateDatabase(database)
+                                }
+                            }
+                        }
+
+                        override fun onOpen(db: SupportSQLiteDatabase) {
+                            super.onOpen(db)
+                            INSTANCE?.let { database ->
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    // Verificar si las señas ya existen
+                                    val senasCount = database.senaDao().getTotalSenas()
+                                    if (senasCount == 0) {
+                                        // Insertar señas si no existen
+                                        insertSenas(database)
+                                    }
                                 }
                             }
                         }
@@ -160,6 +178,39 @@ abstract class EcoHandDatabase : RoomDatabase() {
                 )
             )
             database.logroDao().insertAll(logros)
+
+            // Insertar señas predeterminadas
+            val senas = listOf(
+                SenaEntity(nombre = "amor", imagenResource = "sena_amor", categoria = "EMOCIONES"),
+                SenaEntity(nombre = "comida", imagenResource = "sena_comida", categoria = "NECESIDADES"),
+                SenaEntity(nombre = "escuela", imagenResource = "sena_escuela", categoria = "LUGARES"),
+                SenaEntity(nombre = "familia", imagenResource = "sena_familia", categoria = "PERSONAS"),
+                SenaEntity(nombre = "gracias", imagenResource = "sena_gracias", categoria = "CORTESIA"),
+                SenaEntity(nombre = "hola", imagenResource = "sena_hola", categoria = "SALUDOS"),
+                SenaEntity(nombre = "hombre", imagenResource = "sena_hombre", categoria = "PERSONAS"),
+                SenaEntity(nombre = "hospital", imagenResource = "sena_hospital", categoria = "LUGARES"),
+                SenaEntity(nombre = "mama", imagenResource = "sena_mama", categoria = "FAMILIA"),
+                SenaEntity(nombre = "peru", imagenResource = "sena_peru", categoria = "LUGARES"),
+                SenaEntity(nombre = "trabajo", imagenResource = "sena_trabajo", categoria = "ACTIVIDADES")
+            )
+            database.senaDao().insertAll(senas)
+        }
+
+        private suspend fun insertSenas(database: EcoHandDatabase) {
+            val senas = listOf(
+                SenaEntity(nombre = "amor", imagenResource = "sena_amor", categoria = "EMOCIONES"),
+                SenaEntity(nombre = "comida", imagenResource = "sena_comida", categoria = "NECESIDADES"),
+                SenaEntity(nombre = "escuela", imagenResource = "sena_escuela", categoria = "LUGARES"),
+                SenaEntity(nombre = "familia", imagenResource = "sena_familia", categoria = "PERSONAS"),
+                SenaEntity(nombre = "gracias", imagenResource = "sena_gracias", categoria = "CORTESIA"),
+                SenaEntity(nombre = "hola", imagenResource = "sena_hola", categoria = "SALUDOS"),
+                SenaEntity(nombre = "hombre", imagenResource = "sena_hombre", categoria = "PERSONAS"),
+                SenaEntity(nombre = "hospital", imagenResource = "sena_hospital", categoria = "LUGARES"),
+                SenaEntity(nombre = "mama", imagenResource = "sena_mama", categoria = "FAMILIA"),
+                SenaEntity(nombre = "peru", imagenResource = "sena_peru", categoria = "LUGARES"),
+                SenaEntity(nombre = "trabajo", imagenResource = "sena_trabajo", categoria = "ACTIVIDADES")
+            )
+            database.senaDao().insertAll(senas)
         }
     }
 }

@@ -11,7 +11,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
@@ -20,12 +19,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.ecohand.data.local.database.EcoHandDatabase
+import com.example.ecohand.data.repository.JuegoRepository
 import com.example.ecohand.data.repository.ProgresoRepository
 import com.example.ecohand.data.session.UserSession
 import com.example.ecohand.navigation.Screen
 import com.example.ecohand.navigation.bottomNavItems
 import com.example.ecohand.presentation.home.InicioScreen
 import com.example.ecohand.presentation.juegos.JuegosScreen
+import com.example.ecohand.presentation.juegos.JuegosViewModel
 import com.example.ecohand.presentation.lecciones.LeccionesScreen
 import com.example.ecohand.presentation.perfil.PerfilScreen
 import com.example.ecohand.presentation.progreso.ProgresoScreen
@@ -56,12 +57,25 @@ fun MainScreen() {
         ProgresoViewModel(progresoRepository, usuarioId)
     }
 
+    // Crear JuegoRepository
+    val juegoRepository = JuegoRepository(
+        senaDao = database.senaDao(),
+        partidaJuegoDao = database.partidaJuegoDao(),
+        estadisticasUsuarioDao = database.estadisticasUsuarioDao()
+    )
+
+    // Crear JuegosViewModel con remember para evitar recreaciones
+    val juegosViewModel = remember(usuarioId) {
+        JuegosViewModel(juegoRepository, usuarioId)
+    }
+
     Scaffold(
         bottomBar = { BottomNavigationBar(navController = navController) }
     ) { innerPadding ->
         MainNavHost(
             navController = navController,
             progresoViewModel = progresoViewModel,
+            juegosViewModel = juegosViewModel,
             modifier = Modifier.padding(innerPadding)
         )
     }
@@ -114,6 +128,7 @@ fun BottomNavigationBar(navController: NavHostController) {
 fun MainNavHost(
     navController: NavHostController,
     progresoViewModel: ProgresoViewModel,
+    juegosViewModel: JuegosViewModel,
     modifier: Modifier = Modifier
 ) {
     NavHost(
@@ -131,7 +146,7 @@ fun MainNavHost(
             ProgresoScreen(viewModel = progresoViewModel)
         }
         composable(Screen.Juegos.route) {
-            JuegosScreen()
+            JuegosScreen(viewModel = juegosViewModel)
         }
         composable(Screen.Perfil.route) {
             PerfilScreen()
