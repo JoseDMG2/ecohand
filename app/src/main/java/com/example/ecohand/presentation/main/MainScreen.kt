@@ -14,10 +14,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.ecohand.data.local.database.EcoHandDatabase
 import com.example.ecohand.data.repository.JuegoRepository
 import com.example.ecohand.data.repository.ProgresoRepository
@@ -28,6 +30,8 @@ import com.example.ecohand.presentation.home.InicioScreen
 import com.example.ecohand.presentation.juegos.JuegosScreen
 import com.example.ecohand.presentation.juegos.JuegosViewModel
 import com.example.ecohand.presentation.lecciones.LeccionesScreen
+import com.example.ecohand.presentation.lecciones.LeccionDetalleScreen
+import com.example.ecohand.presentation.lecciones.LeccionPracticaScreen
 import com.example.ecohand.presentation.perfil.PerfilScreen
 import com.example.ecohand.presentation.progreso.ProgresoScreen
 import com.example.ecohand.presentation.progreso.ProgresoViewModel
@@ -70,7 +74,15 @@ fun MainScreen() {
     }
 
     Scaffold(
-        bottomBar = { BottomNavigationBar(navController = navController) }
+        bottomBar = { 
+            val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+            // Ocultar bottom bar en pantallas de detalle y práctica
+            if (currentRoute != null && 
+                !currentRoute.startsWith("leccion_detalle") && 
+                !currentRoute.startsWith("leccion_practica")) {
+                BottomNavigationBar(navController = navController)
+            }
+        }
     ) { innerPadding ->
         MainNavHost(
             navController = navController,
@@ -140,7 +152,38 @@ fun MainNavHost(
             InicioScreen()
         }
         composable(Screen.Lecciones.route) {
-            LeccionesScreen()
+            LeccionesScreen(
+                onNavigateToDetalle = { leccionId ->
+                    navController.navigate(Screen.LeccionDetalle.createRoute(leccionId))
+                }
+            )
+        }
+        composable(
+            route = Screen.LeccionDetalle.route,
+            arguments = listOf(navArgument("leccionId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val leccionId = backStackEntry.arguments?.getInt("leccionId") ?: return@composable
+            LeccionDetalleScreen(
+                leccionId = leccionId,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToPractica = { id ->
+                    navController.navigate(Screen.LeccionPractica.createRoute(id))
+                }
+            )
+        }
+        composable(
+            route = Screen.LeccionPractica.route,
+            arguments = listOf(navArgument("leccionId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val leccionId = backStackEntry.arguments?.getInt("leccionId") ?: return@composable
+            LeccionPracticaScreen(
+                leccionId = leccionId,
+                onNavigateBack = { navController.popBackStack() },
+                onLeccionCompletada = {
+                    // Volver a la lista de lecciones
+                    navController.popBackStack(Screen.Lecciones.route, inclusive = false)
+                }
+            )
         }
         composable(Screen.Progreso.route) {
             ProgresoScreen(viewModel = progresoViewModel)
