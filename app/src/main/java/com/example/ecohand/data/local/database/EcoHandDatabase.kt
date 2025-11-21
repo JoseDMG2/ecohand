@@ -85,43 +85,53 @@ abstract class EcoHandDatabase : RoomDatabase() {
             val lecciones = listOf(
                 LeccionEntity(
                     titulo = "Saludos Básicos",
-                    descripcion = "Aprende los saludos básicos en lengua de señas",
+                    descripcion = "Aprende los saludos básicos en lengua de señas peruanas. En esta lección aprenderás cómo saludar, despedirte y expresar cortesía básica.",
                     nivel = "BASICO",
                     orden = 1,
                     icono = "👋",
+                    videoUrl = "4Pmnh4tRwuk",
+                    categoria = "Saludos",
                     bloqueada = false
                 ),
                 LeccionEntity(
                     titulo = "Alfabeto",
-                    descripcion = "Aprende el alfabeto dactilológico",
+                    descripcion = "Domina el alfabeto dactilológico peruano. Aprende a deletrear palabras letra por letra con tus manos.",
                     nivel = "BASICO",
                     orden = 2,
                     icono = "🔤",
-                    bloqueada = false
+                    videoUrl = "xEsI4vFBLSQ",
+                    categoria = "Alfabeto",
+                    bloqueada = true
                 ),
                 LeccionEntity(
                     titulo = "Números",
-                    descripcion = "Aprende los números del 0 al 10",
+                    descripcion = "Aprende a contar del 0 al 10 en lengua de señas. Fundamental para expresar cantidades y números en tu comunicación.",
                     nivel = "BASICO",
                     orden = 3,
                     icono = "🔢",
-                    bloqueada = false
+                    videoUrl = "NT70U2YVqG0",
+                    categoria = "Números",
+                    bloqueada = true
                 ),
                 LeccionEntity(
                     titulo = "Cortesía",
-                    descripcion = "Frases de cortesía en lengua de señas",
+                    descripcion = "Frases de cortesía esenciales. Aprende a dar las gracias, pedir disculpas y ser cortés en lengua de señas.",
                     nivel = "INTERMEDIO",
                     orden = 4,
                     icono = "🙏",
-                    bloqueada = false
+                    videoUrl = "R5L9bpr3QXM",
+                    categoria = "Cortesía",
+                    bloqueada = true
                 ),
                 LeccionEntity(
                     titulo = "Familia",
-                    descripcion = "Vocabulario sobre la familia",
+                    descripcion = "Vocabulario sobre los miembros de la familia. Aprende a referirte a papá, mamá, hermanos y otros familiares.",
                     nivel = "INTERMEDIO",
                     orden = 5,
                     icono = "👨‍👩‍👧‍👦",
-                    bloqueada = false
+                    videoUrl = "dernDK9ipBs",
+                    categoria = "Familia",
+                    bloqueada = true
                 )
             )
             database.leccionDao().insertAll(lecciones)

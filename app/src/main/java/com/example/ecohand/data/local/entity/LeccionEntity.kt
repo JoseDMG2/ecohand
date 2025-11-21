@@ -12,6 +12,8 @@ data class LeccionEntity(
     val nivel: String,
     val orden: Int,
     val icono: String? = null,
+    val videoUrl: String? = null, // YouTube video ID
+    val categoria: String? = null,
     val bloqueada: Boolean = true,
     val createdAt: Long = System.currentTimeMillis()
 )
