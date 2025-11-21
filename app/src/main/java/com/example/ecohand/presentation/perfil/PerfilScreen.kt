@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -33,6 +34,11 @@ fun PerfilScreen(
     onNavigateToAyuda: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    // Recargar el perfil cada vez que la pantalla se muestra
+    LaunchedEffect(Unit) {
+        viewModel.recargarPerfil()
+    }
 
     Box(
         modifier = Modifier

@@ -26,6 +26,20 @@ class ProgresoRepository(
         estadisticasUsuarioDao.updateEstadisticas(estadisticas)
     }
 
+    // Actualizar estadísticas después de completar una lección
+    suspend fun actualizarEstadisticasLeccion(usuarioId: Int, puntos: Int = 100) {
+        val estadisticas = getOrCreateEstadisticas(usuarioId)
+        val leccionesCompletadas = getLeccionesCompletadas(usuarioId)
+        val puntosTotales = progresoLeccionDao.getTotalPuntos(usuarioId) ?: 0
+
+        val estadisticasActualizadas = estadisticas.copy(
+            puntosTotal = puntosTotales,
+            leccionesCompletadas = leccionesCompletadas,
+            ultimaActualizacion = System.currentTimeMillis()
+        )
+        updateEstadisticas(estadisticasActualizadas)
+    }
+
     // Obtener progreso de lecciones del usuario
     suspend fun getProgresoLecciones(usuarioId: Int): List<ProgresoLeccionEntity> {
         return progresoLeccionDao.getProgresoByUsuario(usuarioId)

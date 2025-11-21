@@ -79,7 +79,8 @@ fun MainScreen() {
     // Crear PerfilRepository
     val perfilRepository = PerfilRepository(
         userDao = database.userDao(),
-        estadisticasUsuarioDao = database.estadisticasUsuarioDao()
+        estadisticasUsuarioDao = database.estadisticasUsuarioDao(),
+        progresoLeccionDao = database.progresoLeccionDao()
     )
 
     // Crear PerfilViewModel con remember para evitar recreaciones

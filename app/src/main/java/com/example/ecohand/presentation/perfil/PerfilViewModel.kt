@@ -33,6 +33,19 @@ class PerfilViewModel(
     val uiState: StateFlow<PerfilUiState> = _uiState.asStateFlow()
     
     init {
+        cargarPerfilInicial()
+    }
+
+    private fun cargarPerfilInicial() {
+        viewModelScope.launch(Dispatchers.IO) {
+            cargarPerfil()
+        }
+    }
+
+    /**
+     * Método público para recargar el perfil
+     */
+    fun recargarPerfil() {
         viewModelScope.launch(Dispatchers.IO) {
             cargarPerfil()
         }
@@ -41,46 +54,39 @@ class PerfilViewModel(
     /**
      * Carga los datos del perfil del usuario
      */
-    fun cargarPerfil() {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-                
-                // Obtener datos del usuario
-                val usuario = perfilRepository.getUserById(usuarioId)
-                
-                if (usuario == null) {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        errorMessage = "Usuario no encontrado"
-                    )
-                    return@launch
-                }
-                
-                // Obtener estadísticas del usuario
-                var estadisticas = perfilRepository.getEstadisticasUsuario(usuarioId)
-                
-                // Si no existen estadísticas, crear unas iniciales
-                if (estadisticas == null) {
-                    estadisticas = perfilRepository.crearEstadisticasIniciales(usuarioId)
-                }
-                
-                // Actualizar UI
-                _uiState.value = PerfilUiState(
-                    isLoading = false,
-                    username = usuario.username,
-                    email = usuario.email,
-                    puntosTotales = estadisticas.puntosTotal,
-                    leccionesCompletadas = estadisticas.leccionesCompletadas,
-                    diasRacha = estadisticas.rachaActual
-                )
-                
-            } catch (e: Exception) {
+    private suspend fun cargarPerfil() {
+        try {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+
+            // Obtener datos del usuario
+            val usuario = perfilRepository.getUserById(usuarioId)
+
+            if (usuario == null) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = "Error al cargar el perfil: ${e.message}"
+                    errorMessage = "Usuario no encontrado"
                 )
+                return
             }
+
+            // Obtener estadísticas actualizadas directamente de la BD
+            val estadisticas = perfilRepository.getEstadisticasActualizadas(usuarioId)
+
+            // Actualizar UI
+            _uiState.value = PerfilUiState(
+                isLoading = false,
+                username = usuario.username,
+                email = usuario.email,
+                puntosTotales = estadisticas.puntosTotal,
+                leccionesCompletadas = estadisticas.leccionesCompletadas,
+                diasRacha = estadisticas.rachaActual
+            )
+
+        } catch (e: Exception) {
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                errorMessage = "Error al cargar el perfil: ${e.message}"
+            )
         }
     }
 }

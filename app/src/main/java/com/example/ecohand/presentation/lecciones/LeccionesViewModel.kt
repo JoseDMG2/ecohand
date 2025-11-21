@@ -33,7 +33,8 @@ class LeccionesViewModel(application: Application) : AndroidViewModel(applicatio
         val database = EcoHandDatabase.getDatabase(application)
         repository = LeccionRepository(
             database.leccionDao(),
-            database.progresoLeccionDao()
+            database.progresoLeccionDao(),
+            database.estadisticasUsuarioDao()
         )
         cargarLecciones()
     }

@@ -3,11 +3,11 @@ package com.example.ecohand.presentation.progreso
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -25,6 +25,11 @@ import kotlinx.coroutines.launch
 @Composable
 fun ProgresoScreen(viewModel: ProgresoViewModel) {
     val uiState by viewModel.uiState.collectAsState()
+
+    // Recargar el progreso cada vez que la pantalla se muestra
+    LaunchedEffect(Unit) {
+        viewModel.recargarProgreso()
+    }
 
     Box(
         modifier = Modifier

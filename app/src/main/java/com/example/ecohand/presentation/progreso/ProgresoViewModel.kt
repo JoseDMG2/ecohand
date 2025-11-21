@@ -46,6 +46,17 @@ class ProgresoViewModel(
     val uiState: StateFlow<ProgresoUiState> = _uiState.asStateFlow()
 
     init {
+        cargarProgresoInicial()
+    }
+
+    private fun cargarProgresoInicial() {
+        viewModelScope.launch(Dispatchers.IO) {
+            cargarProgreso()
+        }
+    }
+
+    // Método público para recargar el progreso
+    fun recargarProgreso() {
         viewModelScope.launch(Dispatchers.IO) {
             cargarProgreso()
         }
