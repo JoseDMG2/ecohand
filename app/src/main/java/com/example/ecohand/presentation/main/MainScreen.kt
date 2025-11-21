@@ -19,12 +19,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.ecohand.data.local.database.EcoHandDatabase
+import com.example.ecohand.data.repository.DiccionarioRepository
 import com.example.ecohand.data.repository.JuegoRepository
 import com.example.ecohand.data.repository.PerfilRepository
 import com.example.ecohand.data.repository.ProgresoRepository
 import com.example.ecohand.data.session.UserSession
 import com.example.ecohand.navigation.Screen
 import com.example.ecohand.navigation.bottomNavItems
+import com.example.ecohand.presentation.diccionario.DiccionarioViewModel
 import com.example.ecohand.presentation.home.InicioScreen
 import com.example.ecohand.presentation.juegos.JuegosScreen
 import com.example.ecohand.presentation.juegos.JuegosViewModel
@@ -81,6 +83,16 @@ fun MainScreen() {
         PerfilViewModel(perfilRepository, usuarioId)
     }
 
+    // Crear DiccionarioRepository
+    val diccionarioRepository = DiccionarioRepository(
+        senaDao = database.senaDao()
+    )
+
+    // Crear DiccionarioViewModel con remember para evitar recreaciones
+    val diccionarioViewModel = remember {
+        DiccionarioViewModel(diccionarioRepository)
+    }
+
     Scaffold(
         bottomBar = { BottomNavigationBar(navController = navController) }
     ) { innerPadding ->
@@ -89,6 +101,7 @@ fun MainScreen() {
             progresoViewModel = progresoViewModel,
             juegosViewModel = juegosViewModel,
             perfilViewModel = perfilViewModel,
+            diccionarioViewModel = diccionarioViewModel,
             modifier = Modifier.padding(innerPadding)
         )
     }
@@ -143,6 +156,7 @@ fun MainNavHost(
     progresoViewModel: ProgresoViewModel,
     juegosViewModel: JuegosViewModel,
     perfilViewModel: PerfilViewModel,
+    diccionarioViewModel: DiccionarioViewModel,
     modifier: Modifier = Modifier
 ) {
     NavHost(
@@ -196,6 +210,7 @@ fun MainNavHost(
         }
         composable(Screen.DiccionarioLSP.route) {
             DiccionarioLSPScreen(
+                viewModel = diccionarioViewModel,
                 onNavigateBack = { navController.popBackStack() }
             )
         }

@@ -3,6 +3,7 @@ package com.example.ecohand.presentation.perfil
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ecohand.data.repository.PerfilRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,14 +33,16 @@ class PerfilViewModel(
     val uiState: StateFlow<PerfilUiState> = _uiState.asStateFlow()
     
     init {
-        cargarPerfil()
+        viewModelScope.launch(Dispatchers.IO) {
+            cargarPerfil()
+        }
     }
     
     /**
      * Carga los datos del perfil del usuario
      */
     fun cargarPerfil() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
                 

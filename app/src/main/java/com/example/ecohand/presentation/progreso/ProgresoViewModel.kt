@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ecohand.data.local.entity.LogroEntity
 import com.example.ecohand.data.repository.ProgresoRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -45,61 +46,61 @@ class ProgresoViewModel(
     val uiState: StateFlow<ProgresoUiState> = _uiState.asStateFlow()
 
     init {
-        cargarProgreso()
+        viewModelScope.launch(Dispatchers.IO) {
+            cargarProgreso()
+        }
     }
 
-    fun cargarProgreso() {
-        viewModelScope.launch {
-            try {
-                _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+    suspend fun cargarProgreso() {
+        try {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
 
-                // Registrar actividad del día
-                progresoRepository.registrarActividadDiaria(usuarioId)
+            // Registrar actividad del día
+            progresoRepository.registrarActividadDiaria(usuarioId)
 
-                // Obtener estadísticas
-                val estadisticas = progresoRepository.getOrCreateEstadisticas(usuarioId)
+            // Obtener estadísticas
+            val estadisticas = progresoRepository.getOrCreateEstadisticas(usuarioId)
 
-                // Obtener lecciones
-                val totalLecciones = progresoRepository.getTotalLecciones()
-                val leccionesCompletadas = progresoRepository.getLeccionesCompletadas(usuarioId)
-                val porcentaje = if (totalLecciones > 0) {
-                    (leccionesCompletadas.toFloat() / totalLecciones.toFloat())
-                } else 0f
+            // Obtener lecciones
+            val totalLecciones = progresoRepository.getTotalLecciones()
+            val leccionesCompletadas = progresoRepository.getLeccionesCompletadas(usuarioId)
+            val porcentaje = if (totalLecciones > 0) {
+                (leccionesCompletadas.toFloat() / totalLecciones.toFloat())
+            } else 0f
 
-                // Obtener actividad semanal
-                val actividadSemanal = obtenerActividadSemanal()
+            // Obtener actividad semanal
+            val actividadSemanal = obtenerActividadSemanal()
 
-                // Obtener logros
-                val logrosData = progresoRepository.getLogrosUsuario(usuarioId)
-                val logros = logrosData.map { (logro, logroUsuario) ->
-                    LogroConEstado(
-                        logro = logro,
-                        obtenido = logroUsuario.obtenido,
-                        fechaObtenido = logroUsuario.fechaObtenido
-                    )
-                }
-
-                // Verificar logros
-                progresoRepository.verificarLogros(usuarioId)
-
-                _uiState.value = ProgresoUiState(
-                    isLoading = false,
-                    leccionesCompletadas = leccionesCompletadas,
-                    totalLecciones = totalLecciones,
-                    porcentajeProgreso = porcentaje,
-                    puntosTotal = estadisticas.puntosTotal,
-                    rachaActual = estadisticas.rachaActual,
-                    leccionesCount = leccionesCompletadas,
-                    diasActivos = estadisticas.diasActivos,
-                    actividadSemanal = actividadSemanal,
-                    logros = logros
-                )
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    errorMessage = "Error al cargar el progreso: ${e.message}"
+            // Obtener logros
+            val logrosData = progresoRepository.getLogrosUsuario(usuarioId)
+            val logros = logrosData.map { (logro, logroUsuario) ->
+                LogroConEstado(
+                    logro = logro,
+                    obtenido = logroUsuario.obtenido,
+                    fechaObtenido = logroUsuario.fechaObtenido
                 )
             }
+
+            // Verificar logros
+            progresoRepository.verificarLogros(usuarioId)
+
+            _uiState.value = ProgresoUiState(
+                isLoading = false,
+                leccionesCompletadas = leccionesCompletadas,
+                totalLecciones = totalLecciones,
+                porcentajeProgreso = porcentaje,
+                puntosTotal = estadisticas.puntosTotal,
+                rachaActual = estadisticas.rachaActual,
+                leccionesCount = leccionesCompletadas,
+                diasActivos = estadisticas.diasActivos,
+                actividadSemanal = actividadSemanal,
+                logros = logros
+            )
+        } catch (e: Exception) {
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                errorMessage = "Error al cargar el progreso: ${e.message}"
+            )
         }
     }
 
