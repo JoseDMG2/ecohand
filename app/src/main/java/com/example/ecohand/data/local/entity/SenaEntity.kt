@@ -9,6 +9,7 @@ data class SenaEntity(
     val id: Int = 0,
     val nombre: String,
     val imagenResource: String,
+    val descripcion: String = "",
     val categoria: String = "GENERAL",
     val dificultad: Int = 1,
     val createdAt: Long = System.currentTimeMillis()

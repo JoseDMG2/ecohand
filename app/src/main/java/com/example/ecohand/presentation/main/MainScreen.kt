@@ -21,18 +21,21 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.ecohand.data.local.database.EcoHandDatabase
+import com.example.ecohand.data.repository.DiccionarioRepository
 import com.example.ecohand.data.repository.JuegoRepository
+import com.example.ecohand.data.repository.PerfilRepository
 import com.example.ecohand.data.repository.ProgresoRepository
 import com.example.ecohand.data.session.UserSession
 import com.example.ecohand.navigation.Screen
 import com.example.ecohand.navigation.bottomNavItems
+import com.example.ecohand.presentation.diccionario.DiccionarioViewModel
 import com.example.ecohand.presentation.home.InicioScreen
 import com.example.ecohand.presentation.juegos.JuegosScreen
 import com.example.ecohand.presentation.juegos.JuegosViewModel
 import com.example.ecohand.presentation.lecciones.LeccionesScreen
 import com.example.ecohand.presentation.lecciones.LeccionDetalleScreen
 import com.example.ecohand.presentation.lecciones.LeccionPracticaScreen
-import com.example.ecohand.presentation.perfil.PerfilScreen
+import com.example.ecohand.presentation.perfil.*
 import com.example.ecohand.presentation.progreso.ProgresoScreen
 import com.example.ecohand.presentation.progreso.ProgresoViewModel
 
@@ -73,6 +76,27 @@ fun MainScreen() {
         JuegosViewModel(juegoRepository, usuarioId)
     }
 
+    // Crear PerfilRepository
+    val perfilRepository = PerfilRepository(
+        userDao = database.userDao(),
+        estadisticasUsuarioDao = database.estadisticasUsuarioDao()
+    )
+
+    // Crear PerfilViewModel con remember para evitar recreaciones
+    val perfilViewModel = remember(usuarioId) {
+        PerfilViewModel(perfilRepository, usuarioId)
+    }
+
+    // Crear DiccionarioRepository
+    val diccionarioRepository = DiccionarioRepository(
+        senaDao = database.senaDao()
+    )
+
+    // Crear DiccionarioViewModel con remember para evitar recreaciones
+    val diccionarioViewModel = remember {
+        DiccionarioViewModel(diccionarioRepository)
+    }
+
     Scaffold(
         bottomBar = { 
             val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
@@ -88,6 +112,8 @@ fun MainScreen() {
             navController = navController,
             progresoViewModel = progresoViewModel,
             juegosViewModel = juegosViewModel,
+            perfilViewModel = perfilViewModel,
+            diccionarioViewModel = diccionarioViewModel,
             modifier = Modifier.padding(innerPadding)
         )
     }
@@ -141,6 +167,8 @@ fun MainNavHost(
     navController: NavHostController,
     progresoViewModel: ProgresoViewModel,
     juegosViewModel: JuegosViewModel,
+    perfilViewModel: PerfilViewModel,
+    diccionarioViewModel: DiccionarioViewModel,
     modifier: Modifier = Modifier
 ) {
     NavHost(
@@ -196,7 +224,52 @@ fun MainNavHost(
             JuegosScreen(viewModel = juegosViewModel)
         }
         composable(Screen.Perfil.route) {
-            PerfilScreen()
+            PerfilScreen(
+                viewModel = perfilViewModel,
+                onNavigateToConfiguracion = { 
+                    navController.navigate(Screen.Configuracion.route)
+                },
+                onNavigateToMisLogros = { 
+                    navController.navigate(Screen.MisLogros.route)
+                },
+                onNavigateToDiccionario = { 
+                    navController.navigate(Screen.DiccionarioLSP.route)
+                },
+                onNavigateToCompartir = { 
+                    navController.navigate(Screen.CompartirApp.route)
+                },
+                onNavigateToAyuda = { 
+                    navController.navigate(Screen.AyudaSoporte.route)
+                }
+            )
+        }
+        
+        // Pantallas de perfil
+        composable(Screen.Configuracion.route) {
+            ConfiguracionScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable(Screen.MisLogros.route) {
+            MisLogrosScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable(Screen.DiccionarioLSP.route) {
+            DiccionarioLSPScreen(
+                viewModel = diccionarioViewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable(Screen.CompartirApp.route) {
+            CompartirAppScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable(Screen.AyudaSoporte.route) {
+            AyudaSoporteScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
     }
 }

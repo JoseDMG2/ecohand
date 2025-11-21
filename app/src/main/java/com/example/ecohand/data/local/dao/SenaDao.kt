@@ -23,6 +23,12 @@ interface SenaDao {
 
     @Query("SELECT * FROM senas")
     suspend fun getAllSenas(): List<SenaEntity>
+    
+    @Query("SELECT * FROM senas WHERE nombre LIKE '%' || :query || '%' ORDER BY nombre ASC")
+    suspend fun searchSenas(query: String): List<SenaEntity>
+    
+    @Query("SELECT * FROM senas ORDER BY nombre ASC")
+    suspend fun getSenasOrdenadas(): List<SenaEntity>
 
     @Query("SELECT COUNT(*) FROM senas")
     suspend fun getTotalSenas(): Int

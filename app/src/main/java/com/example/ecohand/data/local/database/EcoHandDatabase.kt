@@ -23,7 +23,7 @@ import kotlinx.coroutines.launch
         SenaEntity::class,
         PartidaJuegoEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class EcoHandDatabase : RoomDatabase() {
@@ -64,6 +64,20 @@ abstract class EcoHandDatabase : RoomDatabase() {
                             super.onOpen(db)
                             INSTANCE?.let { database ->
                                 CoroutineScope(Dispatchers.IO).launch {
+                                    // Verificar si las lecciones ya existen
+                                    val leccionesCount = database.leccionDao().getAllLecciones().size
+                                    if (leccionesCount == 0) {
+                                        // Insertar lecciones si no existen
+                                        insertLecciones(database)
+                                    }
+
+                                    // Verificar si los logros ya existen
+                                    val logrosCount = database.logroDao().getAllLogros().size
+                                    if (logrosCount == 0) {
+                                        // Insertar logros si no existen
+                                        insertLogros(database)
+                                    }
+
                                     // Verificar si las señas ya existen
                                     val senasCount = database.senaDao().getTotalSenas()
                                     if (senasCount == 0) {
@@ -81,7 +95,13 @@ abstract class EcoHandDatabase : RoomDatabase() {
         }
 
         private suspend fun populateDatabase(database: EcoHandDatabase) {
-            // Insertar lecciones predeterminadas
+            // Insertar lecciones, logros y señas predeterminadas
+            insertLecciones(database)
+            insertLogros(database)
+            insertSenas(database)
+        }
+
+        private suspend fun insertLecciones(database: EcoHandDatabase) {
             val lecciones = listOf(
                 LeccionEntity(
                     titulo = "Saludos Básicos",
@@ -135,8 +155,9 @@ abstract class EcoHandDatabase : RoomDatabase() {
                 )
             )
             database.leccionDao().insertAll(lecciones)
+        }
 
-            // Insertar logros predeterminados
+        private suspend fun insertLogros(database: EcoHandDatabase) {
             val logros = listOf(
                 LogroEntity(
                     nombre = "Primer Paso",
@@ -188,37 +209,70 @@ abstract class EcoHandDatabase : RoomDatabase() {
                 )
             )
             database.logroDao().insertAll(logros)
-
-            // Insertar señas predeterminadas
-            val senas = listOf(
-                SenaEntity(nombre = "amor", imagenResource = "sena_amor", categoria = "EMOCIONES"),
-                SenaEntity(nombre = "comida", imagenResource = "sena_comida", categoria = "NECESIDADES"),
-                SenaEntity(nombre = "escuela", imagenResource = "sena_escuela", categoria = "LUGARES"),
-                SenaEntity(nombre = "familia", imagenResource = "sena_familia", categoria = "PERSONAS"),
-                SenaEntity(nombre = "gracias", imagenResource = "sena_gracias", categoria = "CORTESIA"),
-                SenaEntity(nombre = "hola", imagenResource = "sena_hola", categoria = "SALUDOS"),
-                SenaEntity(nombre = "hombre", imagenResource = "sena_hombre", categoria = "PERSONAS"),
-                SenaEntity(nombre = "hospital", imagenResource = "sena_hospital", categoria = "LUGARES"),
-                SenaEntity(nombre = "mama", imagenResource = "sena_mama", categoria = "FAMILIA"),
-                SenaEntity(nombre = "peru", imagenResource = "sena_peru", categoria = "LUGARES"),
-                SenaEntity(nombre = "trabajo", imagenResource = "sena_trabajo", categoria = "ACTIVIDADES")
-            )
-            database.senaDao().insertAll(senas)
         }
 
         private suspend fun insertSenas(database: EcoHandDatabase) {
             val senas = listOf(
-                SenaEntity(nombre = "amor", imagenResource = "sena_amor", categoria = "EMOCIONES"),
-                SenaEntity(nombre = "comida", imagenResource = "sena_comida", categoria = "NECESIDADES"),
-                SenaEntity(nombre = "escuela", imagenResource = "sena_escuela", categoria = "LUGARES"),
-                SenaEntity(nombre = "familia", imagenResource = "sena_familia", categoria = "PERSONAS"),
-                SenaEntity(nombre = "gracias", imagenResource = "sena_gracias", categoria = "CORTESIA"),
-                SenaEntity(nombre = "hola", imagenResource = "sena_hola", categoria = "SALUDOS"),
-                SenaEntity(nombre = "hombre", imagenResource = "sena_hombre", categoria = "PERSONAS"),
-                SenaEntity(nombre = "hospital", imagenResource = "sena_hospital", categoria = "LUGARES"),
-                SenaEntity(nombre = "mama", imagenResource = "sena_mama", categoria = "FAMILIA"),
-                SenaEntity(nombre = "peru", imagenResource = "sena_peru", categoria = "LUGARES"),
-                SenaEntity(nombre = "trabajo", imagenResource = "sena_trabajo", categoria = "ACTIVIDADES")
+                SenaEntity(
+                    nombre = "Amor",
+                    imagenResource = "sena_amor",
+                    descripcion = "Cruzar ambos puños en el pecho",
+                    categoria = "EMOCIONES"
+                ),
+                SenaEntity(
+                    nombre = "Comedor",
+                    imagenResource = "sena_comedor",
+                    descripcion = "1. Con los dedos pulgar e índice de ambas manos diseñar un cuadrado (seña de lugar). 2. Configurar la seña del verbo comer.",
+                    categoria = "LUGARES"
+                ),
+                SenaEntity(
+                    nombre = "Escuela",
+                    imagenResource = "sena_escuela",
+                    descripcion = "Con ambas manos juntas con los dedos semiflexionados realizar un movimiento circular de izquierda a derecha",
+                    categoria = "LUGARES"
+                ),
+                SenaEntity(
+                    nombre = "Familia",
+                    imagenResource = "sena_familia",
+                    descripcion = "1. Configurar 'F' con ambas manos. 2. Realizar un movimiento semicircular hacia adelante.",
+                    categoria = "PERSONAS"
+                ),
+                SenaEntity(
+                    nombre = "Agradecer",
+                    imagenResource = "sena_agradecer",
+                    descripcion = "Llevar la mano derecha extendida a la altura de los labios y bajarla haciendo un movimiento hacia adelante.",
+                    categoria = "CORTESIA"
+                ),
+                SenaEntity(
+                    nombre = "Hombre",
+                    imagenResource = "sena_hombre",
+                    descripcion = "Con el dedo índice sobre el labio superior indicar el lugar del bigote con un movimiento lateral.",
+                    categoria = "PERSONAS"
+                ),
+                SenaEntity(
+                    nombre = "Hospital",
+                    imagenResource = "sena_hospital",
+                    descripcion = "Con los dedos índice y medio de la mano derecha, hacer una cruz en el brazo izquierdo.",
+                    categoria = "LUGARES"
+                ),
+                SenaEntity(
+                    nombre = "Mamá",
+                    imagenResource = "sena_mama",
+                    descripcion = "Configurar 'M' con la mano derecha a la altura del hombro y realizar movimientos de izquierda a derecha.",
+                    categoria = "FAMILIA"
+                ),
+                SenaEntity(
+                    nombre = "Perú",
+                    imagenResource = "sena_peru",
+                    descripcion = "Se colocan los dedos índices y medios unidos, apuntando hacia arriba y un poco hacia adelante, de manera que la forma parezca la vincha inca con las plumas",
+                    categoria = "LUGARES"
+                ),
+                SenaEntity(
+                    nombre = "Trabajo",
+                    imagenResource = "sena_trabajo",
+                    descripcion = "Debes formar dos puños en forma de 'S'. Coloca la mano no dominante hacia abajo, con la mano dominante tocando la parte superior de la muñeca, y golpea con el puño dominante sobre el no dominante varias veces",
+                    categoria = "ACTIVIDADES"
+                )
             )
             database.senaDao().insertAll(senas)
         }
