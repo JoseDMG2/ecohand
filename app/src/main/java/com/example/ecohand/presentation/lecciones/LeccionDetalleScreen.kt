@@ -1,24 +1,27 @@
 package com.example.ecohand.presentation.lecciones
 
-import android.view.ViewGroup
-import android.webkit.WebChromeClient
-import android.webkit.WebView
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -29,6 +32,7 @@ fun LeccionDetalleScreen(
     onNavigateToPractica: (Int) -> Unit,
     viewModel: LeccionesViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val leccion = uiState.leccionActual
     
@@ -116,16 +120,58 @@ fun LeccionDetalleScreen(
             
             Divider()
             
-            // Video de YouTube
+            // Card de Video de YouTube (clickeable para abrir en YouTube)
             if (!leccion.videoUrl.isNullOrEmpty()) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(220.dp)
-                        .clip(RoundedCornerShape(12.dp)),
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=${leccion.videoUrl}"))
+                            context.startActivity(intent)
+                        },
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    ),
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
-                    YoutubePlayer(videoId = leccion.videoUrl)
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            // Icono de Play
+                            Icon(
+                                imageVector = Icons.Default.PlayArrow,
+                                contentDescription = "Reproducir video",
+                                modifier = Modifier.size(64.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            
+                            Spacer(modifier = Modifier.height(12.dp))
+                            
+                            Text(
+                                text = "VIDEO: ${leccion.titulo.uppercase()}",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
+                            Text(
+                                text = "Toca para ver en YouTube",
+                                fontSize = 13.sp,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
                 }
             }
             
@@ -178,64 +224,4 @@ fun LeccionDetalleScreen(
             }
         }
     }
-}
-
-@Composable
-fun YoutubePlayer(videoId: String) {
-    AndroidView(
-        factory = { context ->
-            WebView(context).apply {
-                layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-                )
-                
-                settings.apply {
-                    javaScriptEnabled = true
-                    domStorageEnabled = true
-                    loadWithOverviewMode = true
-                    useWideViewPort = true
-                }
-                
-                webChromeClient = WebChromeClient()
-                
-                val videoHtml = """
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <style>
-                            body { margin: 0; padding: 0; background: #000; }
-                            .video-container {
-                                position: relative;
-                                padding-bottom: 56.25%;
-                                height: 0;
-                                overflow: hidden;
-                            }
-                            .video-container iframe {
-                                position: absolute;
-                                top: 0;
-                                left: 0;
-                                width: 100%;
-                                height: 100%;
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="video-container">
-                            <iframe 
-                                src="https://www.youtube.com/embed/$videoId?rel=0&modestbranding=1"
-                                frameborder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowfullscreen>
-                            </iframe>
-                        </div>
-                    </body>
-                    </html>
-                """.trimIndent()
-                
-                loadData(videoHtml, "text/html", "utf-8")
-            }
-        },
-        modifier = Modifier.fillMaxSize()
-    )
 }
