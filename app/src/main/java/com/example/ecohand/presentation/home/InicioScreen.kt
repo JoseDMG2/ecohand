@@ -101,6 +101,26 @@ fun InicioScreen(
             }
         }
         
+        // Saludo personalizado
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+        ) {
+            Text(
+                text = "Hola, ${uiState.nombreUsuario}!",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Un resumen de tu progreso:",
+                fontSize = 15.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        
         // Tarjetas de Estadísticas (Grid 3 columnas)
         Row(
             modifier = Modifier.fillMaxWidth(),
