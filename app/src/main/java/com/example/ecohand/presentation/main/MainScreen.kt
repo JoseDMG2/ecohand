@@ -149,7 +149,11 @@ fun MainNavHost(
         modifier = modifier
     ) {
         composable(Screen.Inicio.route) {
-            InicioScreen()
+            InicioScreen(
+                onNavigateToLeccion = { leccionId ->
+                    navController.navigate(Screen.LeccionDetalle.createRoute(leccionId))
+                }
+            )
         }
         composable(Screen.Lecciones.route) {
             LeccionesScreen(
