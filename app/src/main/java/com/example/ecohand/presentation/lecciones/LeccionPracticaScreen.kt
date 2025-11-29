@@ -8,7 +8,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -35,8 +34,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.ecohand.ml.HandDetectionResult
 import com.example.ecohand.ml.HandOverlay
+import com.example.ecohand.ml.ImageUtils
 import java.util.concurrent.Executors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -487,7 +486,7 @@ fun CameraPreviewWithAnalysis(
                     .build()
                     .also {
                         it.setAnalyzer(executor) { imageProxy ->
-                            val bitmap = imageProxyToBitmap(imageProxy)
+                            val bitmap = ImageUtils.imageProxyToBitmap(imageProxy)
                             if (bitmap != null) {
                                 onFrameAnalyzed(bitmap)
                             }
@@ -514,33 +513,4 @@ fun CameraPreviewWithAnalysis(
         },
         modifier = modifier
     )
-}
-
-private fun imageProxyToBitmap(imageProxy: ImageProxy): Bitmap? {
-    return try {
-        val buffer = imageProxy.planes[0].buffer
-        val bytes = ByteArray(buffer.remaining())
-        buffer.get(bytes)
-        
-        // Create bitmap from YUV data
-        val yuvImage = android.graphics.YuvImage(
-            bytes,
-            android.graphics.ImageFormat.NV21,
-            imageProxy.width,
-            imageProxy.height,
-            null
-        )
-        
-        val out = java.io.ByteArrayOutputStream()
-        yuvImage.compressToJpeg(
-            android.graphics.Rect(0, 0, imageProxy.width, imageProxy.height),
-            80,
-            out
-        )
-        
-        val imageBytes = out.toByteArray()
-        android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-    } catch (e: Exception) {
-        null
-    }
 }
