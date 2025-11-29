@@ -38,6 +38,11 @@ android {
     buildFeatures {
         compose = true
     }
+    
+    // Don't compress MediaPipe model files
+    androidResources {
+        noCompress += listOf("task", "tflite")
+    }
 }
 
 dependencies {
@@ -71,6 +76,12 @@ dependencies {
     
     // Coil for image loading
     implementation(libs.coil.compose)
+    
+    // MediaPipe for hand detection
+    implementation(libs.mediapipe.tasks.vision)
+    
+    // Gson for JSON serialization
+    implementation(libs.gson)
     
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

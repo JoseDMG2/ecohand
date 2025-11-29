@@ -15,4 +15,5 @@ sealed class Screen(val route: String) {
     object Progreso : Screen("progreso")
     object Juegos : Screen("juegos")
     object Perfil : Screen("perfil")
+    object DataCollection : Screen("data_collection")
 }

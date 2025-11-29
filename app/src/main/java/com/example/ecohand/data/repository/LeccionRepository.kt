@@ -26,7 +26,7 @@ class LeccionRepository(
         return progresoLeccionDao.getProgresoByUsuario(usuarioId)
     }
     
-    suspend fun completarLeccion(usuarioId: Int, leccionId: Int) {
+    suspend fun completarLeccion(usuarioId: Int, leccionId: Int, puntuacion: Int = 100, intentos: Int = 1) {
         val progresoExistente = progresoLeccionDao.getProgresoByUsuarioAndLeccion(usuarioId, leccionId)
         
         if (progresoExistente != null) {
@@ -35,7 +35,8 @@ class LeccionRepository(
                 completada = true,
                 fechaCompletado = System.currentTimeMillis(),
                 ultimaActualizacion = System.currentTimeMillis(),
-                puntuacion = 100
+                puntuacion = puntuacion,
+                intentos = progresoExistente.intentos + intentos
             )
             progresoLeccionDao.updateProgreso(progresoActualizado)
         } else {
@@ -44,7 +45,8 @@ class LeccionRepository(
                 usuarioId = usuarioId,
                 leccionId = leccionId,
                 completada = true,
-                puntuacion = 100,
+                puntuacion = puntuacion,
+                intentos = intentos,
                 fechaCompletado = System.currentTimeMillis()
             )
             progresoLeccionDao.insertProgreso(nuevoProgreso)
