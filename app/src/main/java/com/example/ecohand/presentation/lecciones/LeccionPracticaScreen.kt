@@ -2,18 +2,23 @@ package com.example.ecohand.presentation.lecciones
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.view.ViewGroup
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,8 +35,9 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
+import com.example.ecohand.ml.HandDetectionResult
+import com.example.ecohand.ml.HandOverlay
+import java.util.concurrent.Executors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,6 +51,8 @@ fun LeccionPracticaScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     val uiState by viewModel.uiState.collectAsState()
     val leccion = uiState.leccionActual
+    val evaluationState = uiState.evaluationState
+    val sena = uiState.senaActual
     
     var hasCameraPermission by remember {
         mutableStateOf(
@@ -54,6 +62,8 @@ fun LeccionPracticaScreen(
             ) == PackageManager.PERMISSION_GRANTED
         )
     }
+    
+    var lastCapturedBitmap by remember { mutableStateOf<Bitmap?>(null) }
     
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
@@ -88,7 +98,7 @@ fun LeccionPracticaScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Práctica: ${leccion?.titulo ?: ""}",
+                        text = "Practica: ${leccion?.titulo ?: ""}",
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp
                     )
@@ -127,7 +137,7 @@ fun LeccionPracticaScreen(
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            // Instrucciones
+            // Instructions and Status Card
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -141,23 +151,104 @@ fun LeccionPracticaScreen(
                     modifier = Modifier.padding(16.dp)
                 ) {
                     Text(
-                        text = "Realizar la seña \"${leccion.titulo}\"",
+                        text = "Realizar la sena \"${sena?.nombre ?: leccion.titulo}\"",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     
-                    Text(
-                        text = "Intento 1 • 5 vidas restantes",
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                    )
+                    // Lives and attempts display
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Attempts
+                        Text(
+                            text = "Intento ${evaluationState.intentos + 1} de ${evaluationState.maxIntentos}",
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        )
+                        
+                        // Lives
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            repeat(evaluationState.vidas) {
+                                Icon(
+                                    imageVector = Icons.Default.Favorite,
+                                    contentDescription = null,
+                                    tint = Color.Red,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                            repeat(5 - evaluationState.vidas) {
+                                Icon(
+                                    imageVector = Icons.Default.Favorite,
+                                    contentDescription = null,
+                                    tint = Color.Gray,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                    }
+                    
+                    // Precision indicator
+                    if (evaluationState.ultimaPrecision > 0) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        LinearProgressIndicator(
+                            progress = { evaluationState.ultimaPrecision },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(8.dp)
+                                .clip(RoundedCornerShape(4.dp)),
+                            color = when {
+                                evaluationState.ultimaPrecision >= 0.85f -> Color.Green
+                                evaluationState.ultimaPrecision >= 0.5f -> Color.Yellow
+                                else -> Color.Red
+                            },
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                        Text(
+                            text = "Precision: ${(evaluationState.ultimaPrecision * 100).toInt()}%",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
                 }
             }
             
-            // Vista de cámara
+            // Feedback message
+            evaluationState.feedbackMessage?.let { message ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = when (evaluationState.isCorrect) {
+                            true -> Color(0xFF4CAF50)
+                            false -> Color(0xFFFF5722)
+                            null -> MaterialTheme.colorScheme.surfaceVariant
+                        }
+                    )
+                ) {
+                    Text(
+                        text = message,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        textAlign = TextAlign.Center,
+                        color = Color.White,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            
+            // Camera view with overlay
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -166,12 +257,59 @@ fun LeccionPracticaScreen(
                 contentAlignment = Alignment.Center
             ) {
                 if (hasCameraPermission) {
-                    CameraPreview(
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .aspectRatio(3f / 4f)
                             .clip(RoundedCornerShape(16.dp))
-                    )
+                    ) {
+                        // Camera preview with analysis
+                        CameraPreviewWithAnalysis(
+                            onFrameAnalyzed = { bitmap ->
+                                lastCapturedBitmap = bitmap
+                                viewModel.processFrame(bitmap)
+                            },
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        
+                        // Hand overlay
+                        HandOverlay(
+                            detectionResult = evaluationState.handDetectionResult,
+                            modifier = Modifier.fillMaxSize(),
+                            isMirrored = true
+                        )
+                        
+                        // Hand detection indicator
+                        val hasHands = evaluationState.handDetectionResult?.hasHands == true
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(8.dp)
+                                .size(16.dp)
+                                .clip(CircleShape)
+                                .background(if (hasHands) Color.Green else Color.Red)
+                        )
+                        
+                        // ML status indicator
+                        if (!uiState.isSignRecognizerReady) {
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.TopStart)
+                                    .padding(8.dp)
+                                    .background(
+                                        Color.Black.copy(alpha = 0.7f),
+                                        RoundedCornerShape(4.dp)
+                                    )
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = "Cargando modelo...",
+                                    color = Color.White,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+                    }
                 } else {
                     Card(
                         modifier = Modifier
@@ -187,12 +325,12 @@ fun LeccionPracticaScreen(
                             verticalArrangement = Arrangement.Center
                         ) {
                             Text(
-                                text = "📷",
+                                text = "Permiso de camara requerido",
                                 fontSize = 64.sp
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                text = "Permiso de cámara requerido",
+                                text = "Permiso de camara requerido",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -211,30 +349,43 @@ fun LeccionPracticaScreen(
                 }
             }
             
-            // Botón evaluar
+            // Evaluate button
             Button(
                 onClick = {
-                    viewModel.completarLeccion(leccionId)
+                    lastCapturedBitmap?.let { bitmap ->
+                        viewModel.evaluarSena(bitmap)
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
                     .height(56.dp),
+                enabled = !evaluationState.isEvaluating && 
+                         evaluationState.vidas > 0 && 
+                         evaluationState.intentos < evaluationState.maxIntentos &&
+                         lastCapturedBitmap != null,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text(
-                    text = "Evaluar la seña",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                if (evaluationState.isEvaluating) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Text(
+                        text = "Evaluar la sena",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }
     
-    // Dialog de completado
+    // Completion dialog
     if (uiState.showCompletadoDialog) {
         Dialog(onDismissRequest = {}) {
             Card(
@@ -252,7 +403,6 @@ fun LeccionPracticaScreen(
                         .padding(32.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Icono de éxito
                     Box(
                         modifier = Modifier
                             .size(80.dp)
@@ -261,8 +411,8 @@ fun LeccionPracticaScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "✓",
-                            fontSize = 48.sp,
+                            text = "OK",
+                            fontSize = 32.sp,
                             color = Color.White,
                             fontWeight = FontWeight.Bold
                         )
@@ -271,7 +421,7 @@ fun LeccionPracticaScreen(
                     Spacer(modifier = Modifier.height(24.dp))
                     
                     Text(
-                        text = "¡COMPLETADO!",
+                        text = "COMPLETADO!",
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary,
@@ -281,7 +431,14 @@ fun LeccionPracticaScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     Text(
-                        text = "Has completado la lección",
+                        text = "Precision: ${(evaluationState.ultimaPrecision * 100).toInt()}%",
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                    
+                    Text(
+                        text = "Intentos: ${evaluationState.intentos}",
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
@@ -293,9 +450,19 @@ fun LeccionPracticaScreen(
 }
 
 @Composable
-fun CameraPreview(modifier: Modifier = Modifier) {
+fun CameraPreviewWithAnalysis(
+    onFrameAnalyzed: (Bitmap) -> Unit,
+    modifier: Modifier = Modifier
+) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val executor = remember { Executors.newSingleThreadExecutor() }
+    
+    DisposableEffect(Unit) {
+        onDispose {
+            executor.shutdown()
+        }
+    }
     
     AndroidView(
         factory = { ctx ->
@@ -315,6 +482,19 @@ fun CameraPreview(modifier: Modifier = Modifier) {
                     it.setSurfaceProvider(previewView.surfaceProvider)
                 }
                 
+                val imageAnalysis = ImageAnalysis.Builder()
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .build()
+                    .also {
+                        it.setAnalyzer(executor) { imageProxy ->
+                            val bitmap = imageProxyToBitmap(imageProxy)
+                            if (bitmap != null) {
+                                onFrameAnalyzed(bitmap)
+                            }
+                            imageProxy.close()
+                        }
+                    }
+                
                 val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
                 
                 try {
@@ -322,7 +502,8 @@ fun CameraPreview(modifier: Modifier = Modifier) {
                     cameraProvider.bindToLifecycle(
                         lifecycleOwner,
                         cameraSelector,
-                        preview
+                        preview,
+                        imageAnalysis
                     )
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -333,4 +514,33 @@ fun CameraPreview(modifier: Modifier = Modifier) {
         },
         modifier = modifier
     )
+}
+
+private fun imageProxyToBitmap(imageProxy: ImageProxy): Bitmap? {
+    return try {
+        val buffer = imageProxy.planes[0].buffer
+        val bytes = ByteArray(buffer.remaining())
+        buffer.get(bytes)
+        
+        // Create bitmap from YUV data
+        val yuvImage = android.graphics.YuvImage(
+            bytes,
+            android.graphics.ImageFormat.NV21,
+            imageProxy.width,
+            imageProxy.height,
+            null
+        )
+        
+        val out = java.io.ByteArrayOutputStream()
+        yuvImage.compressToJpeg(
+            android.graphics.Rect(0, 0, imageProxy.width, imageProxy.height),
+            80,
+            out
+        )
+        
+        val imageBytes = out.toByteArray()
+        android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+    } catch (e: Exception) {
+        null
+    }
 }

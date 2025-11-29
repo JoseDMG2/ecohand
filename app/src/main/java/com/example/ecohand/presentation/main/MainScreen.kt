@@ -26,6 +26,7 @@ import com.example.ecohand.data.repository.ProgresoRepository
 import com.example.ecohand.data.session.UserSession
 import com.example.ecohand.navigation.Screen
 import com.example.ecohand.navigation.bottomNavItems
+import com.example.ecohand.presentation.admin.DataCollectionScreen
 import com.example.ecohand.presentation.home.InicioScreen
 import com.example.ecohand.presentation.juegos.JuegosScreen
 import com.example.ecohand.presentation.juegos.JuegosViewModel
@@ -76,10 +77,11 @@ fun MainScreen() {
     Scaffold(
         bottomBar = { 
             val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
-            // Ocultar bottom bar en pantallas de detalle y práctica
+            // Ocultar bottom bar en pantallas de detalle, práctica y recolección de datos
             if (currentRoute != null && 
                 !currentRoute.startsWith("leccion_detalle") && 
-                !currentRoute.startsWith("leccion_practica")) {
+                !currentRoute.startsWith("leccion_practica") &&
+                !currentRoute.startsWith("data_collection")) {
                 BottomNavigationBar(navController = navController)
             }
         }
@@ -196,7 +198,16 @@ fun MainNavHost(
             JuegosScreen(viewModel = juegosViewModel)
         }
         composable(Screen.Perfil.route) {
-            PerfilScreen()
+            PerfilScreen(
+                onNavigateToDataCollection = {
+                    navController.navigate(Screen.DataCollection.route)
+                }
+            )
+        }
+        composable(Screen.DataCollection.route) {
+            DataCollectionScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
     }
 }
