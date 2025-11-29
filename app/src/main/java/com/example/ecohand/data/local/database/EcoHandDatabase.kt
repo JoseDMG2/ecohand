@@ -21,9 +21,10 @@ import kotlinx.coroutines.launch
         LogroUsuarioEntity::class,
         EstadisticasUsuarioEntity::class,
         SenaEntity::class,
-        PartidaJuegoEntity::class
+        PartidaJuegoEntity::class,
+        SenaDataCollectionEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class EcoHandDatabase : RoomDatabase() {
@@ -37,6 +38,7 @@ abstract class EcoHandDatabase : RoomDatabase() {
     abstract fun estadisticasUsuarioDao(): EstadisticasUsuarioDao
     abstract fun senaDao(): SenaDao
     abstract fun partidaJuegoDao(): PartidaJuegoDao
+    abstract fun senaDataCollectionDao(): SenaDataCollectionDao
 
     companion object {
         @Volatile
