@@ -21,18 +21,21 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.ecohand.data.local.database.EcoHandDatabase
+import com.example.ecohand.data.repository.DiccionarioRepository
 import com.example.ecohand.data.repository.JuegoRepository
+import com.example.ecohand.data.repository.PerfilRepository
 import com.example.ecohand.data.repository.ProgresoRepository
 import com.example.ecohand.data.session.UserSession
 import com.example.ecohand.navigation.Screen
 import com.example.ecohand.navigation.bottomNavItems
+import com.example.ecohand.presentation.diccionario.DiccionarioViewModel
 import com.example.ecohand.presentation.home.InicioScreen
 import com.example.ecohand.presentation.juegos.JuegosScreen
 import com.example.ecohand.presentation.juegos.JuegosViewModel
 import com.example.ecohand.presentation.lecciones.LeccionesScreen
 import com.example.ecohand.presentation.lecciones.LeccionDetalleScreen
 import com.example.ecohand.presentation.lecciones.LeccionPracticaScreen
-import com.example.ecohand.presentation.perfil.PerfilScreen
+import com.example.ecohand.presentation.perfil.*
 import com.example.ecohand.presentation.progreso.ProgresoScreen
 import com.example.ecohand.presentation.progreso.ProgresoViewModel
 
@@ -73,13 +76,36 @@ fun MainScreen() {
         JuegosViewModel(juegoRepository, usuarioId)
     }
 
+    // Crear PerfilRepository
+    val perfilRepository = PerfilRepository(
+        userDao = database.userDao(),
+        estadisticasUsuarioDao = database.estadisticasUsuarioDao(),
+        progresoLeccionDao = database.progresoLeccionDao()
+    )
+
+    // Crear PerfilViewModel con remember para evitar recreaciones
+    val perfilViewModel = remember(usuarioId) {
+        PerfilViewModel(perfilRepository, usuarioId)
+    }
+
+    // Crear DiccionarioRepository
+    val diccionarioRepository = DiccionarioRepository(
+        senaDao = database.senaDao()
+    )
+
+    // Crear DiccionarioViewModel con remember para evitar recreaciones
+    val diccionarioViewModel = remember {
+        DiccionarioViewModel(diccionarioRepository)
+    }
+
     Scaffold(
-        bottomBar = { 
+        bottomBar = {
             val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
-            // Ocultar bottom bar en pantallas de detalle y práctica
-            if (currentRoute != null && 
-                !currentRoute.startsWith("leccion_detalle") && 
-                !currentRoute.startsWith("leccion_practica")) {
+            // Ocultar bottom bar en pantallas de detalle, práctica y detección
+            if (currentRoute != null &&
+                !currentRoute.startsWith("leccion_detalle") &&
+                !currentRoute.startsWith("leccion_practica") &&
+                currentRoute != Screen.DetectionTest.route) {
                 BottomNavigationBar(navController = navController)
             }
         }
@@ -88,6 +114,8 @@ fun MainScreen() {
             navController = navController,
             progresoViewModel = progresoViewModel,
             juegosViewModel = juegosViewModel,
+            perfilViewModel = perfilViewModel,
+            diccionarioViewModel = diccionarioViewModel,
             modifier = Modifier.padding(innerPadding)
         )
     }
@@ -97,7 +125,7 @@ fun MainScreen() {
 fun BottomNavigationBar(navController: NavHostController) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-    
+
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.primary,
         contentColor = MaterialTheme.colorScheme.onPrimary
@@ -141,6 +169,8 @@ fun MainNavHost(
     navController: NavHostController,
     progresoViewModel: ProgresoViewModel,
     juegosViewModel: JuegosViewModel,
+    perfilViewModel: PerfilViewModel,
+    diccionarioViewModel: DiccionarioViewModel,
     modifier: Modifier = Modifier
 ) {
     NavHost(
@@ -196,7 +226,85 @@ fun MainNavHost(
             JuegosScreen(viewModel = juegosViewModel)
         }
         composable(Screen.Perfil.route) {
-            PerfilScreen()
+            PerfilScreen(
+                viewModel = perfilViewModel,
+                onNavigateToConfiguracion = {
+                    navController.navigate(Screen.Configuracion.route)
+                },
+                onNavigateToMisLogros = {
+                    navController.navigate(Screen.MisLogros.route)
+                },
+                onNavigateToDiccionario = {
+                    navController.navigate(Screen.DiccionarioLSP.route)
+                },
+                onNavigateToCompartir = {
+                    navController.navigate(Screen.CompartirApp.route)
+                },
+                onNavigateToAyuda = {
+                    navController.navigate(Screen.AyudaSoporte.route)
+                },
+                onNavigateToDetectionTest = {
+                    navController.navigate(Screen.VowelSelection.route)
+                }
+            )
+        }
+
+        // Pantallas de perfil
+        composable(Screen.Configuracion.route) {
+            ConfiguracionScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable(Screen.MisLogros.route) {
+            MisLogrosScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable(Screen.DiccionarioLSP.route) {
+            DiccionarioLSPScreen(
+                viewModel = diccionarioViewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable(Screen.CompartirApp.route) {
+            CompartirAppScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable(Screen.AyudaSoporte.route) {
+            AyudaSoporteScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // Pantalla de prueba de detección
+        composable(Screen.DetectionTest.route) {
+            com.example.ecohand.presentation.components.DetectionTestScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // Pantallas de validación de señas
+        composable(Screen.VowelSelection.route) {
+            com.example.ecohand.presentation.senas.VowelSelectionScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onVowelSelected = { vowel ->
+                    navController.navigate(Screen.VowelValidation.createRoute(vowel))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.VowelValidation.route,
+            arguments = listOf(
+                navArgument("vowel") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val vowel = backStackEntry.arguments?.getString("vowel") ?: "A"
+            com.example.ecohand.presentation.senas.VowelValidationScreen(
+                vowel = vowel,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
     }
 }

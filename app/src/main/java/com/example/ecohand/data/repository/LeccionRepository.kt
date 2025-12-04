@@ -1,5 +1,6 @@
 package com.example.ecohand.data.repository
 
+import com.example.ecohand.data.local.dao.EstadisticasUsuarioDao
 import com.example.ecohand.data.local.dao.LeccionDao
 import com.example.ecohand.data.local.dao.ProgresoLeccionDao
 import com.example.ecohand.data.local.entity.LeccionEntity
@@ -7,7 +8,8 @@ import com.example.ecohand.data.local.entity.ProgresoLeccionEntity
 
 class LeccionRepository(
     private val leccionDao: LeccionDao,
-    private val progresoLeccionDao: ProgresoLeccionDao
+    private val progresoLeccionDao: ProgresoLeccionDao,
+    private val estadisticasUsuarioDao: EstadisticasUsuarioDao
 ) {
     
     suspend fun getAllLecciones(): List<LeccionEntity> {
@@ -48,6 +50,25 @@ class LeccionRepository(
                 fechaCompletado = System.currentTimeMillis()
             )
             progresoLeccionDao.insertProgreso(nuevoProgreso)
+        }
+
+        // Actualizar estadísticas del usuario
+        actualizarEstadisticas(usuarioId)
+    }
+
+    // Actualizar estadísticas después de completar una lección
+    private suspend fun actualizarEstadisticas(usuarioId: Int) {
+        val estadisticas = estadisticasUsuarioDao.getEstadisticasByUsuario(usuarioId)
+        if (estadisticas != null) {
+            val leccionesCompletadas = getLeccionesCompletadasCount(usuarioId)
+            val puntosTotales = progresoLeccionDao.getTotalPuntos(usuarioId) ?: 0
+
+            val estadisticasActualizadas = estadisticas.copy(
+                puntosTotal = puntosTotales,
+                leccionesCompletadas = leccionesCompletadas,
+                ultimaActualizacion = System.currentTimeMillis()
+            )
+            estadisticasUsuarioDao.updateEstadisticas(estadisticasActualizadas)
         }
     }
     

@@ -50,6 +50,9 @@ captures/
 *.jks
 *.keystore
 
+# MediaPipe models (too large for git)
+app/src/main/assets/*.task
+
 # External native build folder generated in Android Studio 2.2 and later
 .externalNativeBuild
 .cxx/

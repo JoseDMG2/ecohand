@@ -3,13 +3,14 @@ package com.example.ecohand.presentation.progreso
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -18,10 +19,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Composable
 fun ProgresoScreen(viewModel: ProgresoViewModel) {
     val uiState by viewModel.uiState.collectAsState()
+
+    // Recargar el progreso cada vez que la pantalla se muestra
+    LaunchedEffect(Unit) {
+        viewModel.recargarProgreso()
+    }
 
     Box(
         modifier = Modifier
@@ -89,12 +97,17 @@ fun ProgresoScreen(viewModel: ProgresoViewModel) {
 
         // Mostrar error si existe
         uiState.errorMessage?.let { error ->
+            val scope = rememberCoroutineScope()
             Snackbar(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(16.dp),
                 action = {
-                    TextButton(onClick = { viewModel.cargarProgreso() }) {
+                    TextButton(onClick = { 
+                        scope.launch(Dispatchers.IO) {
+                            viewModel.cargarProgreso()
+                        }
+                    }) {
                         Text("Reintentar")
                     }
                 }

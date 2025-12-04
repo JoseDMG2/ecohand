@@ -15,4 +15,19 @@ sealed class Screen(val route: String) {
     object Progreso : Screen("progreso")
     object Juegos : Screen("juegos")
     object Perfil : Screen("perfil")
+    
+    // Pantallas de perfil
+    object Configuracion : Screen("configuracion")
+    object MisLogros : Screen("mis_logros")
+    object DiccionarioLSP : Screen("diccionario_lsp")
+    object CompartirApp : Screen("compartir_app")
+    object AyudaSoporte : Screen("ayuda_soporte")
+
+    // Pantalla de prueba de detección
+    object DetectionTest : Screen("detection_test")
+    // Pantallas de validación de señas
+    object VowelSelection : Screen("vowel_selection")
+    object VowelValidation : Screen("vowel_validation/{vowel}") {
+        fun createRoute(vowel: String) = "vowel_validation/$vowel"
+    }
 }

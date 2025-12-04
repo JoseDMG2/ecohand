@@ -72,6 +72,9 @@ dependencies {
     // Coil for image loading
     implementation(libs.coil.compose)
     
+    // MediaPipe for hand and face detection
+    implementation(libs.mediapipe.tasks.vision)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
