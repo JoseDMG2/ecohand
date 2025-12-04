@@ -356,7 +356,7 @@ private fun VowelInstructionsCard(vowel: String) {
         "E" -> "Curva todos los dedos hacia la palma, con el pulgar cubriendo las puntas"
         "I" -> "Extiende solo el meñique hacia arriba, mantén los demás dedos cerrados"
         "O" -> "Forma un círculo con todos los dedos, juntando las puntas"
-        "U" -> "Extiende índice y medio juntos hacia arriba, cierra los demás dedos"
+        "U" -> "Extiende índice y meñique hacia arriba, cierra medio, anular y pulgar"
         else -> "Realiza la seña correspondiente a la vocal seleccionada"
     }
 

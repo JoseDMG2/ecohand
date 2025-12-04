@@ -122,7 +122,7 @@ class VowelSignValidator {
 
     /**
      * Valida si la seña corresponde a la vocal U
-     * Características: Índice y medio extendidos y juntos, demás dedos cerrados
+     * Características: Índice y meñique extendidos hacia arriba, medio, anular y pulgar cerrados
      */
     fun validateLetterU(handResult: HandLandmarkerResult): Boolean {
         if (handResult.landmarks().isEmpty()) return false
@@ -130,20 +130,17 @@ class VowelSignValidator {
         val landmarks = handResult.landmarks()[0]
 
         try {
-            // Verificar que índice y medio estén extendidos
+            // Verificar que índice y meñique estén extendidos
             val isIndexExtended = isFingerExtended(landmarks, FingerType.INDEX)
-            val isMiddleExtended = isFingerExtended(landmarks, FingerType.MIDDLE)
-
-            // Verificar que estén juntos (poca distancia entre sus puntas)
-            val areIndexMiddleClose = areIndexMiddleFingersTogether(landmarks)
+            val isPinkyExtended = isFingerExtended(landmarks, FingerType.PINKY)
 
             // Verificar que demás dedos estén cerrados
             val isThumbClosed = !isThumbExtended(landmarks)
+            val isMiddleClosed = !isFingerExtended(landmarks, FingerType.MIDDLE)
             val isRingClosed = !isFingerExtended(landmarks, FingerType.RING)
-            val isPinkyClosed = !isFingerExtended(landmarks, FingerType.PINKY)
 
-            return isIndexExtended && isMiddleExtended && areIndexMiddleClose &&
-                   isThumbClosed && isRingClosed && isPinkyClosed
+            return isIndexExtended && isPinkyExtended &&
+                   isThumbClosed && isMiddleClosed && isRingClosed
         } catch (e: Exception) {
             return false
         }
@@ -226,16 +223,6 @@ class VowelSignValidator {
         return !indexExtended && !middleExtended
     }
 
-    /**
-     * Verifica si los dedos índice y medio están juntos (para letra U)
-     */
-    private fun areIndexMiddleFingersTogether(landmarks: List<com.google.mediapipe.tasks.components.containers.NormalizedLandmark>): Boolean {
-        val indexTip = landmarks[8]
-        val middleTip = landmarks[12]
-
-        val distance = distance(indexTip.x(), indexTip.y(), middleTip.x(), middleTip.y())
-        return distance < 0.06f // Los dedos deben estar cerca uno del otro
-    }
 
     /**
      * Calcula la distancia euclidiana entre dos puntos

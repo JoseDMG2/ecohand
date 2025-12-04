@@ -12,7 +12,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -29,7 +28,7 @@ fun VowelSelectionScreen(
         VowelInfo("E", "Todos los dedos curvados, pulgar cubriendo puntas"),
         VowelInfo("I", "Solo meñique extendido hacia arriba"),
         VowelInfo("O", "Dedos formando un círculo"),
-        VowelInfo("U", "Índice y medio extendidos y juntos")
+        VowelInfo("U", "Índice y meñique extendidos hacia arriba")
     )
 
     Scaffold(
