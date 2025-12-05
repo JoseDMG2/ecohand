@@ -14,6 +14,7 @@ class UserSession(context: Context) {
         private const val KEY_USERNAME = "username"
         private const val KEY_EMAIL = "email"
         private const val KEY_IS_LOGGED_IN = "is_logged_in"
+        private const val KEY_REMEMBER_ME = "remember_me"
 
         @Volatile
         private var INSTANCE: UserSession? = null
@@ -27,14 +28,19 @@ class UserSession(context: Context) {
         }
     }
 
-    fun saveUserSession(userId: Int, username: String, email: String) {
+    fun saveUserSession(userId: Int, username: String, email: String, rememberMe: Boolean = false) {
         prefs.edit().apply {
             putInt(KEY_USER_ID, userId)
             putString(KEY_USERNAME, username)
             putString(KEY_EMAIL, email)
             putBoolean(KEY_IS_LOGGED_IN, true)
+            putBoolean(KEY_REMEMBER_ME, rememberMe)
             apply()
         }
+    }
+
+    fun isRememberMeEnabled(): Boolean {
+        return prefs.getBoolean(KEY_REMEMBER_ME, false)
     }
 
     fun getUserId(): Int {

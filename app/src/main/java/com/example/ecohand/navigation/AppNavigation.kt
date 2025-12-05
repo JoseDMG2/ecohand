@@ -25,9 +25,16 @@ fun AppNavigation() {
     val userSession = remember { UserSession.getInstance(context) }
     val loginViewModel = remember { LoginViewModel(userRepository, userSession) }
 
+    // Determinar ruta inicial basada en si hay sesión activa
+    val startDestination = if (userSession.isLoggedIn() && userSession.isRememberMeEnabled()) {
+        Screen.Home.route
+    } else {
+        Screen.Splash.route
+    }
+
     NavHost(
         navController = navController,
-        startDestination = Screen.Splash.route
+        startDestination = startDestination
     ) {
         composable(Screen.Splash.route) {
             SplashScreen(
@@ -51,7 +58,13 @@ fun AppNavigation() {
         }
         
         composable(Screen.Home.route) {
-            MainScreen()
+            MainScreen(
+                onLogout = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
         }
     }
 }

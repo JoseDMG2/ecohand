@@ -40,7 +40,9 @@ import com.example.ecohand.presentation.progreso.ProgresoScreen
 import com.example.ecohand.presentation.progreso.ProgresoViewModel
 
 @Composable
-fun MainScreen() {
+fun MainScreen(
+    onLogout: () -> Unit = {}
+) {
     val navController = rememberNavController()
     val context = LocalContext.current
 
@@ -116,6 +118,7 @@ fun MainScreen() {
             juegosViewModel = juegosViewModel,
             perfilViewModel = perfilViewModel,
             diccionarioViewModel = diccionarioViewModel,
+            onLogout = onLogout,
             modifier = Modifier.padding(innerPadding)
         )
     }
@@ -171,6 +174,7 @@ fun MainNavHost(
     juegosViewModel: JuegosViewModel,
     perfilViewModel: PerfilViewModel,
     diccionarioViewModel: DiccionarioViewModel,
+    onLogout: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     NavHost(
@@ -252,7 +256,8 @@ fun MainNavHost(
         // Pantallas de perfil
         composable(Screen.Configuracion.route) {
             ConfiguracionScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onLogout = onLogout
             )
         }
         composable(Screen.MisLogros.route) {

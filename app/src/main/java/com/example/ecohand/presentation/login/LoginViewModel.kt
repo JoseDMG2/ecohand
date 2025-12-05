@@ -16,7 +16,8 @@ data class LoginUiState(
     val errorMessage: String? = null,
     val isLoginSuccessful: Boolean = false,
     val isRegistering: Boolean = false,
-    val username: String = ""
+    val username: String = "",
+    val rememberMe: Boolean = false
 )
 
 class LoginViewModel(
@@ -39,6 +40,10 @@ class LoginViewModel(
         _uiState.value = _uiState.value.copy(username = username, errorMessage = null)
     }
     
+    fun onRememberMeChange(rememberMe: Boolean) {
+        _uiState.value = _uiState.value.copy(rememberMe = rememberMe)
+    }
+
     fun toggleRegistering() {
         _uiState.value = _uiState.value.copy(
             isRegistering = !_uiState.value.isRegistering,
@@ -62,7 +67,7 @@ class LoginViewModel(
             _uiState.value = if (result.isSuccess) {
                 val user = result.getOrNull()
                 if (user != null) {
-                    userSession.saveUserSession(user.id, user.username, user.email)
+                    userSession.saveUserSession(user.id, user.username, user.email, currentState.rememberMe)
                 }
                 currentState.copy(isLoading = false, isLoginSuccessful = true)
             } else {
@@ -99,7 +104,7 @@ class LoginViewModel(
             _uiState.value = if (result.isSuccess) {
                 val userId = result.getOrNull()
                 if (userId != null) {
-                    userSession.saveUserSession(userId.toInt(), currentState.username, currentState.email)
+                    userSession.saveUserSession(userId.toInt(), currentState.username, currentState.email, currentState.rememberMe)
                 }
                 currentState.copy(isLoading = false, isLoginSuccessful = true)
             } else {

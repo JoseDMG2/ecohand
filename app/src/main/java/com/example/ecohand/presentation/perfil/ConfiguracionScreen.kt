@@ -1,6 +1,5 @@
 package com.example.ecohand.presentation.perfil
 
-import android.app.Activity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -29,7 +28,8 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConfiguracionScreen(
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onLogout: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val userSession = remember { UserSession.getInstance(context) }
@@ -260,7 +260,8 @@ fun ConfiguracionScreen(
                 TextButton(
                     onClick = {
                         userSession.clearSession()
-                        (context as? Activity)?.finishAffinity()
+                        showLogoutDialog = false
+                        onLogout()
                     }
                 ) {
                     Text("Cerrar Sesión", color = MaterialTheme.colorScheme.error)
