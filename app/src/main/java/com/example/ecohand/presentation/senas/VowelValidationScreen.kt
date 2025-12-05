@@ -311,19 +311,17 @@ fun VowelValidationScreen(
                 Button(
                     onClick = {
                         showSuccessDialog = false
-                        // Si viene desde una lección, completarla
-                        if (leccionId != null) {
-                            scope.launch {
-                                try {
-                                    val usuarioId = userSession.getUserId()
-                                    leccionRepository.completarLeccion(usuarioId, leccionId)
-                                    onLeccionCompletada()
-                                } catch (e: Exception) {
-                                    // En caso de error, igual navegar de vuelta
-                                    onLeccionCompletada()
-                                }
-                            }
+                        // Si viene desde una lección (leccionId > 0), marcar seña como completada
+                        if (leccionId != null && leccionId > 0) {
+                            // Marcar esta seña específica como completada
+                            com.example.ecohand.data.session.LeccionValidacionState.marcarSenaCompletada(leccionId, vowel)
+                            // Volver a la pantalla anterior (lista de señas)
+                            onNavigateBack()
+                        } else if (leccionId == 0) {
+                            // Modo multi-validación: solo llamar callback sin guardar
+                            onLeccionCompletada()
                         } else {
+                            // Modo normal: volver atrás
                             onNavigateBack()
                         }
                     },

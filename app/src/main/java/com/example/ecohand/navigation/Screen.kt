@@ -12,6 +12,9 @@ sealed class Screen(val route: String) {
     object LeccionPractica : Screen("leccion_practica/{leccionId}") {
         fun createRoute(leccionId: Int) = "leccion_practica/$leccionId"
     }
+    object LeccionListaValidacion : Screen("leccion_lista_validacion/{leccionId}") {
+        fun createRoute(leccionId: Int) = "leccion_lista_validacion/$leccionId"
+    }
     object Progreso : Screen("progreso")
     object Juegos : Screen("juegos")
     object Perfil : Screen("perfil")

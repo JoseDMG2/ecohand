@@ -205,11 +205,19 @@ fun MainNavHost(
                 leccionId = leccionId,
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToPractica = { id ->
-                    // Si es la lección de "Saludos Básicos" (ID 1), ir a validación de "Hola"
-                    if (id == 1) {
-                        navController.navigate(Screen.VowelValidation.createRoute("Hola", leccionId = 1))
-                    } else {
-                        navController.navigate(Screen.LeccionPractica.createRoute(id))
+                    when (id) {
+                        1 -> {
+                            // Saludos Básicos → Validación de "Hola"
+                            navController.navigate(Screen.VowelValidation.createRoute("Hola", leccionId = 1))
+                        }
+                        2 -> {
+                            // Alfabeto → Lista de validación A, I, Z
+                            navController.navigate(Screen.LeccionListaValidacion.createRoute(2))
+                        }
+                        else -> {
+                            // Otras lecciones → Práctica normal
+                            navController.navigate(Screen.LeccionPractica.createRoute(id))
+                        }
                     }
                 }
             )
@@ -224,6 +232,36 @@ fun MainNavHost(
                 onNavigateBack = { navController.popBackStack() },
                 onLeccionCompletada = {
                     // Volver a la lista de lecciones
+                    navController.popBackStack(Screen.Lecciones.route, inclusive = false)
+                }
+            )
+        }
+        composable(
+            route = Screen.LeccionListaValidacion.route,
+            arguments = listOf(navArgument("leccionId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val leccionId = backStackEntry.arguments?.getInt("leccionId") ?: return@composable
+
+            // Definir las señas según la lección
+            val senasAValidar = when (leccionId) {
+                2 -> listOf(
+                    com.example.ecohand.presentation.lecciones.SenaItem("A", "Pulgar extendido hacia afuera"),
+                    com.example.ecohand.presentation.lecciones.SenaItem("I", "Solo meñique extendido"),
+                    com.example.ecohand.presentation.lecciones.SenaItem("Z", "Índice trazando una Z")
+                )
+                else -> emptyList()
+            }
+
+            com.example.ecohand.presentation.lecciones.LeccionListaValidacionScreen(
+                leccionId = leccionId,
+                senasAValidar = senasAValidar,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToValidacion = { letra, lecId ->
+                    navController.navigate(
+                        Screen.VowelValidation.createRoute(letra, leccionId = lecId)
+                    )
+                },
+                onLeccionCompletada = {
                     navController.popBackStack(Screen.Lecciones.route, inclusive = false)
                 }
             )
