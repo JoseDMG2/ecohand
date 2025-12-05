@@ -28,7 +28,9 @@ fun VowelSelectionScreen(
         VowelInfo("E", "Todos los dedos curvados, pulgar cubriendo puntas"),
         VowelInfo("I", "Solo meñique extendido hacia arriba"),
         VowelInfo("O", "Dedos formando un círculo"),
-        VowelInfo("U", "Índice y meñique extendidos hacia arriba")
+        VowelInfo("U", "Índice y meñique extendidos hacia arriba"),
+        VowelInfo("J", "Meñique extendido formando un arco (requiere movimiento)"),
+        VowelInfo("Z", "Índice extendido trazando una Z (requiere movimiento)")
     )
 
     Scaffold(
