@@ -16,18 +16,15 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -41,7 +38,6 @@ import com.example.ecohand.ml.FaceDetector
 import com.example.ecohand.ml.HandDetector
 import com.example.ecohand.ml.VowelSignValidator
 import com.example.ecohand.presentation.components.DetectionOverlay
-import com.example.ecohand.utils.toBitmap
 import com.google.mediapipe.tasks.vision.core.RunningMode
 import com.google.mediapipe.tasks.vision.facelandmarker.FaceLandmarkerResult
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarkerResult
@@ -79,6 +75,7 @@ fun VowelValidationScreen(
     var detectionStatus by remember { mutableStateOf("Inicializando...") }
     var validationResult by remember { mutableStateOf<ValidationState>(ValidationState.Detecting) }
     var showSuccessDialog by remember { mutableStateOf(false) }
+    var showInfoDialog by remember { mutableStateOf(false) }
 
     // Detectores y validador
     val handDetector = remember {
@@ -160,6 +157,14 @@ fun VowelValidationScreen(
                     }
                 },
                 actions = {
+                    // Botón de información
+                    IconButton(onClick = { showInfoDialog = true }) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "Ver información"
+                        )
+                    }
+                    // Botón para cambiar cámara
                     IconButton(onClick = { useFrontCamera = !useFrontCamera }) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
@@ -176,62 +181,74 @@ fun VowelValidationScreen(
             )
         }
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            // Estado de validación
-            ValidationStatusCard(
-                vowel = vowel,
-                validationState = validationResult,
-                detectionStatus = detectionStatus
-            )
-
-            // Vista de cámara con overlay
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .padding(horizontal = 16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                if (hasCameraPermission) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(3f / 4f)
-                            .clip(RoundedCornerShape(16.dp))
-                    ) {
-                        CameraPreviewWithValidation(
-                            useFrontCamera = useFrontCamera,
-                            handDetector = handDetector,
-                            faceDetector = faceDetector,
-                            onImageDimensionsChanged = { width, height ->
-                                imageWidth = width
-                                imageHeight = height
-                            }
-                        )
-
-                        // Overlay de detecciones
-                        DetectionOverlay(
-                            handResults = handResults,
-                            faceResults = faceResults,
-                            imageWidth = imageWidth,
-                            imageHeight = imageHeight,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-                } else {
-                    PermissionRequestCard(onRequestPermission = {
-                        launcher.launch(Manifest.permission.CAMERA)
-                    })
+            // Vista de cámara con overlay ocupando todo el espacio
+            if (hasCameraPermission) {
+                // Cámara con key para forzar recomposición al cambiar de cámara
+                key(useFrontCamera) {
+                    CameraPreviewWithValidation(
+                        useFrontCamera = useFrontCamera,
+                        handDetector = handDetector,
+                        faceDetector = faceDetector,
+                        onImageDimensionsChanged = { width, height ->
+                            imageWidth = width
+                            imageHeight = height
+                        }
+                    )
                 }
-            }
 
-            // Instrucciones específicas para la vocal
-            VowelInstructionsCard(vowel = vowel)
+                // Overlay de detecciones
+                DetectionOverlay(
+                    handResults = handResults,
+                    faceResults = faceResults,
+                    imageWidth = imageWidth,
+                    imageHeight = imageHeight,
+                    modifier = Modifier.fillMaxSize()
+                )
+
+                // Overlay de estado en la parte superior (texto sin fondo)
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Estado de validación (texto con sombra para visibilidad)
+                    Text(
+                        text = when (validationResult) {
+                            is ValidationState.Detecting -> "🔍 Detectando..."
+                            is ValidationState.Success -> "✅ ¡Correcto!"
+                            is ValidationState.Error -> "❌ ${(validationResult as ValidationState.Error).message}"
+                            is ValidationState.Waiting -> "⏳ Esperando seña..."
+                        },
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = when (validationResult) {
+                            is ValidationState.Success -> Color(0xFF4CAF50)
+                            is ValidationState.Error -> Color(0xFFF44336)
+                            else -> Color.White
+                        },
+                        style = androidx.compose.ui.text.TextStyle(
+                            shadow = androidx.compose.ui.graphics.Shadow(
+                                color = Color.Black,
+                                offset = androidx.compose.ui.geometry.Offset(2f, 2f),
+                                blurRadius = 4f
+                            )
+                        ),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            } else {
+                PermissionRequestCard(onRequestPermission = {
+                    launcher.launch(Manifest.permission.CAMERA)
+                })
+            }
         }
     }
 
@@ -291,104 +308,96 @@ fun VowelValidationScreen(
             }
         )
     }
-}
 
-@Composable
-private fun ValidationStatusCard(
-    vowel: String,
-    validationState: ValidationState,
-    detectionStatus: String
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = when (validationState) {
-                is ValidationState.Success -> Color(0xFF4CAF50).copy(alpha = 0.1f)
-                is ValidationState.Error -> Color(0xFFF44336).copy(alpha = 0.1f)
-                else -> MaterialTheme.colorScheme.primaryContainer
+    // Diálogo de información
+    if (showInfoDialog) {
+        AlertDialog(
+            onDismissRequest = { showInfoDialog = false },
+            title = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = "Información",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(28.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Información de Detección",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Letra: $vowel",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "Estado: $detectionStatus",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "Validación: ${when (validationResult) {
+                            is ValidationState.Detecting -> "Detectando..."
+                            is ValidationState.Success -> "¡Correcto!"
+                            is ValidationState.Error -> (validationResult as ValidationState.Error).message
+                            is ValidationState.Waiting -> "Esperando seña..."
+                        }}",
+                        fontSize = 14.sp,
+                        color = when (validationResult) {
+                            is ValidationState.Success -> Color(0xFF4CAF50)
+                            is ValidationState.Error -> Color(0xFFF44336)
+                            else -> MaterialTheme.colorScheme.onSurface
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    HorizontalDivider()
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = "📋 Instrucciones:",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = when (vowel.uppercase()) {
+                            "A" -> "Extiende el pulgar hacia afuera y cierra los demás dedos formando un puño"
+                            "E" -> "Curva todos los dedos hacia la palma, con el pulgar cubriendo las puntas"
+                            "I" -> "Extiende solo el meñique hacia arriba, mantén los demás dedos cerrados"
+                            "O" -> "Forma un círculo con todos los dedos, juntando las puntas"
+                            "U" -> "Extiende índice y meñique hacia arriba, cierra medio, anular y pulgar"
+                            "J" -> "Extiende solo el meñique y mueve tu mano formando un arco, desde palma adelante hasta palma atrás"
+                            "Z" -> "Extiende solo el índice y traza una Z en el aire: línea horizontal → diagonal → línea horizontal"
+                            else -> "Realiza la seña correspondiente a la vocal seleccionada"
+                        },
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showInfoDialog = false }
+                ) {
+                    Text("Entendido")
+                }
             }
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text(
-                text = "Validando Letra $vowel",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = detectionStatus,
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = when (validationState) {
-                        is ValidationState.Detecting -> "🔍 Detectando..."
-                        is ValidationState.Success -> "✅ ¡Correcto!"
-                        is ValidationState.Error -> "❌ ${validationState.message}"
-                        is ValidationState.Waiting -> "⏳ Esperando seña..."
-                    },
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = when (validationState) {
-                        is ValidationState.Success -> Color(0xFF4CAF50)
-                        is ValidationState.Error -> Color(0xFFF44336)
-                        else -> MaterialTheme.colorScheme.onPrimaryContainer
-                    }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun VowelInstructionsCard(vowel: String) {
-    val instructions = when (vowel.uppercase()) {
-        "A" -> "Extiende el pulgar hacia afuera y cierra los demás dedos formando un puño"
-        "E" -> "Curva todos los dedos hacia la palma, con el pulgar cubriendo las puntas"
-        "I" -> "Extiende solo el meñique hacia arriba, mantén los demás dedos cerrados"
-        "O" -> "Forma un círculo con todos los dedos, juntando las puntas"
-        "U" -> "Extiende índice y meñique hacia arriba, cierra medio, anular y pulgar"
-        "J" -> "Extiende solo el meñique y mueve tu mano formando un arco, desde palma adelante hasta palma atrás"
-        "Z" -> "Extiende solo el índice y traza una Z en el aire: línea horizontal → diagonal → línea horizontal"
-        else -> "Realiza la seña correspondiente a la vocal seleccionada"
-    }
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text(
-                text = "📋 Instrucciones",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = instructions,
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
-            )
-        }
     }
 }
 
@@ -415,7 +424,7 @@ private fun CameraPreviewWithValidation(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT
                 )
-                scaleType = PreviewView.ScaleType.FILL_CENTER
+                scaleType = PreviewView.ScaleType.FIT_CENTER
                 implementationMode = PreviewView.ImplementationMode.COMPATIBLE
             }
 

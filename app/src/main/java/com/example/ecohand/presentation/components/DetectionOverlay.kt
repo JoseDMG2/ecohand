@@ -27,14 +27,34 @@ fun DetectionOverlay(
         val canvasWidth = size.width
         val canvasHeight = size.height
 
+        // Calcular el escalado para FIT_CENTER (mantiene toda la imagen visible)
+        // FIT_CENTER escala para que toda la imagen quepa en el canvas
+        val imageAspectRatio = if (imageHeight > 0) imageWidth.toFloat() / imageHeight.toFloat() else 1f
+        val canvasAspectRatio = if (canvasHeight > 0) canvasWidth / canvasHeight else 1f
+
+        // Para FIT_CENTER: escalar por la dimensión que limita (la más pequeña relativamente)
+        val (scaleX, scaleY, offsetX, offsetY) = if (imageAspectRatio > canvasAspectRatio) {
+            // La imagen es más ancha proporcionalmente: escalar por ancho, centrar verticalmente
+            val scale = canvasWidth / imageWidth
+            val scaledHeight = imageHeight * scale
+            val yOffset = (canvasHeight - scaledHeight) / 2f
+            listOf(scale, scale, 0f, yOffset)
+        } else {
+            // La imagen es más alta proporcionalmente: escalar por altura, centrar horizontalmente
+            val scale = canvasHeight / imageHeight
+            val scaledWidth = imageWidth * scale
+            val xOffset = (canvasWidth - scaledWidth) / 2f
+            listOf(scale, scale, xOffset, 0f)
+        }
+
         // Dibujar manos
         handResults?.let { results ->
             results.landmarks().forEachIndexed { handIndex, landmarks ->
                 drawHandLandmarks(
                     landmarks = landmarks.map { landmark ->
                         Offset(
-                            x = landmark.x() * canvasWidth,
-                            y = landmark.y() * canvasHeight
+                            x = landmark.x() * imageWidth * scaleX + offsetX,
+                            y = landmark.y() * imageHeight * scaleY + offsetY
                         )
                     },
                     canvasWidth = canvasWidth,
@@ -49,8 +69,8 @@ fun DetectionOverlay(
                 drawFaceLandmarks(
                     landmarks = landmarks.map { landmark ->
                         Offset(
-                            x = landmark.x() * canvasWidth,
-                            y = landmark.y() * canvasHeight
+                            x = landmark.x() * imageWidth * scaleX + offsetX,
+                            y = landmark.y() * imageHeight * scaleY + offsetY
                         )
                     },
                     canvasWidth = canvasWidth,
