@@ -42,7 +42,7 @@ fun VowelSelectionScreen(
             VowelInfo("0", "Todos los dedos curvados formando un círculo, puntas de los dedos tocando la punta del pulgar"),
             VowelInfo("1", "Solo el dedo índice extendido hacia arriba, demás dedos cerrados"),
             VowelInfo("2", "Dedos índice y medio extendidos hacia arriba formando una V"),
-            VowelInfo("3", "Dedos índice, medio y anular extendidos hacia arriba"),
+            VowelInfo("3", "Dedos pulgar, índice y medio extendidos, anular y meñique cerrados"),
             VowelInfo("4", "Los cuatro dedos extendidos hacia arriba, pulgar doblado hacia la palma"),
             VowelInfo("5", "Todos los dedos extendidos y separados, mano abierta completa")
         )

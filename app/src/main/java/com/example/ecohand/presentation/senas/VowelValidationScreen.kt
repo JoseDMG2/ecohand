@@ -413,7 +413,7 @@ fun VowelValidationScreen(
                             "0" -> "Forma un círculo con todos los dedos curvados, juntando las puntas de los dedos (índice, medio, anular y meñique) con la punta del pulgar"
                             "1" -> "Extiende solo el dedo índice hacia arriba, mantén los demás dedos cerrados"
                             "2" -> "Extiende los dedos índice y medio hacia arriba formando una V, cierra el pulgar, anular y meñique"
-                            "3" -> "Extiende los dedos índice, medio y anular hacia arriba, mantén cerrados el pulgar y meñique"
+                            "3" -> "Extiende los dedos pulgar, índice y medio, mantén cerrados/doblados el anular y meñique"
                             "4" -> "Extiende los cuatro dedos (índice, medio, anular y meñique) hacia arriba, dobla el pulgar hacia la palma"
                             "5" -> "Abre completamente la mano con todos los dedos extendidos y separados"
                             else -> "Realiza la seña correspondiente seleccionada"

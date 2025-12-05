@@ -385,7 +385,7 @@ class VowelSignValidator {
 
     /**
      * Valida si la seña corresponde al número 3 (TRES)
-     * Características: Dedos índice, medio y anular extendidos hacia arriba
+     * Características: Dedos pulgar, índice y medio extendidos, anular y meñique cerrados
      */
     fun validateNumber3(handResult: HandLandmarkerResult): Boolean {
         if (handResult.landmarks().isEmpty()) return false
@@ -393,17 +393,17 @@ class VowelSignValidator {
         val landmarks = handResult.landmarks()[0]
 
         try {
-            // Verificar que índice, medio y anular estén extendidos
+            // Verificar que pulgar, índice y medio estén extendidos
+            val isThumbExtended = isThumbExtended(landmarks)
             val isIndexExtended = isFingerExtended(landmarks, FingerType.INDEX)
             val isMiddleExtended = isFingerExtended(landmarks, FingerType.MIDDLE)
-            val isRingExtended = isFingerExtended(landmarks, FingerType.RING)
 
-            // Verificar que pulgar y meñique estén cerrados
-            val isThumbClosed = !isThumbExtended(landmarks)
+            // Verificar que anular y meñique estén cerrados/doblados
+            val isRingClosed = !isFingerExtended(landmarks, FingerType.RING)
             val isPinkyClosed = !isFingerExtended(landmarks, FingerType.PINKY)
 
-            return isIndexExtended && isMiddleExtended && isRingExtended &&
-                   isThumbClosed && isPinkyClosed
+            return isThumbExtended && isIndexExtended && isMiddleExtended &&
+                   isRingClosed && isPinkyClosed
         } catch (e: Exception) {
             return false
         }
