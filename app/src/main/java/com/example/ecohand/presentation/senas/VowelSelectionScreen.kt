@@ -20,25 +20,29 @@ import androidx.compose.ui.unit.sp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VowelSelectionScreen(
+    category: String,
     onNavigateBack: () -> Unit,
     onVowelSelected: (String) -> Unit
 ) {
-    val vowels = listOf(
-        VowelInfo("A", "Pulgar extendido hacia afuera, demás dedos cerrados"),
-        VowelInfo("E", "Todos los dedos curvados, pulgar cubriendo puntas"),
-        VowelInfo("I", "Solo meñique extendido hacia arriba"),
-        VowelInfo("O", "Dedos formando un círculo"),
-        VowelInfo("U", "Índice y meñique extendidos hacia arriba"),
-        VowelInfo("J", "Meñique extendido formando un arco (requiere movimiento)"),
-        VowelInfo("Z", "Índice extendido trazando una Z (requiere movimiento)")
-    )
+    // Obtener las señas según la categoría
+    val vowels = when (category) {
+        "Alfabeto" -> listOf(
+            VowelInfo("A", "Pulgar extendido hacia afuera, demás dedos cerrados"),
+            VowelInfo("E", "Todos los dedos curvados, pulgar cubriendo puntas"),
+            VowelInfo("I", "Solo meñique extendido hacia arriba"),
+            VowelInfo("O", "Dedos formando un círculo"),
+            VowelInfo("U", "Índice y meñique extendidos hacia arriba"),
+            VowelInfo("Z", "Índice extendido trazando una Z (requiere movimiento)")
+        )
+        else -> emptyList() // Otras categorías próximamente
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Seleccionar Vocal",
+                        text = category,
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp
                     )
@@ -80,14 +84,14 @@ fun VowelSelectionScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "🖐️ Validación de Señas",
+                        text = "🖐️ $category",
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Selecciona la vocal que quieres practicar",
+                        text = "Selecciona la seña que quieres practicar",
                         fontSize = 16.sp,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
                         textAlign = TextAlign.Center

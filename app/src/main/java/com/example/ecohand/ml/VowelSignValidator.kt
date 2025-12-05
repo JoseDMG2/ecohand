@@ -16,10 +16,6 @@ class VowelSignValidator {
         private const val MIN_TRAJECTORY_POINTS = 5 // Mínimo de puntos para validar trayectoria
     }
 
-    // Variables para rastrear el movimiento de la letra J
-    private val trajectoryPoints = mutableListOf<TrajectoryPoint>()
-    private var lastTrajectoryTime = 0L
-    private var arcDetectionStarted = false
 
     // Variables para rastrear el movimiento de la letra Z
     private val zTrajectoryPoints = mutableListOf<TrajectoryPoint>()
@@ -163,157 +159,6 @@ class VowelSignValidator {
         }
     }
 
-    /**
-     * Valida si la seña corresponde a la letra J
-     * Características: Solo meñique extendido, mano se mueve formando un arco
-     * Requiere detección de movimiento continuo
-     */
-    fun validateLetterJ(handResult: HandLandmarkerResult): LetterJValidationResult {
-        if (handResult.landmarks().isEmpty()) {
-            resetJTrajectory()
-            return LetterJValidationResult(false, "No se detecta mano", 0f)
-        }
-
-        val landmarks = handResult.landmarks()[0]
-
-        try {
-            // 1. Verificar que solo el meñique esté extendido (posición inicial de J)
-            val isPinkyExtended = isFingerExtended(landmarks, FingerType.PINKY)
-            val isThumbClosed = !isThumbExtended(landmarks)
-            val isIndexClosed = !isFingerExtended(landmarks, FingerType.INDEX)
-            val isMiddleClosed = !isFingerExtended(landmarks, FingerType.MIDDLE)
-            val isRingClosed = !isFingerExtended(landmarks, FingerType.RING)
-
-            val correctHandShape = isPinkyExtended && isThumbClosed &&
-                                  isIndexClosed && isMiddleClosed && isRingClosed
-
-            if (!correctHandShape) {
-                resetJTrajectory()
-                return LetterJValidationResult(false, "Forma de mano incorrecta", 0f)
-            }
-
-            // 2. Rastrear el movimiento del meñique
-            val pinkyTip = landmarks[20] // Punta del meñique
-            val currentTime = System.currentTimeMillis()
-
-            // Añadir punto a la trayectoria
-            trajectoryPoints.add(TrajectoryPoint(pinkyTip.x(), pinkyTip.y(), currentTime))
-
-            // Limpiar puntos antiguos (más de 2 segundos)
-            trajectoryPoints.removeAll { currentTime - it.timestamp > 2000 }
-
-            // 3. Verificar si la trayectoria forma un arco
-            if (trajectoryPoints.size >= MIN_TRAJECTORY_POINTS) {
-                val arcResult = detectArcMovement(trajectoryPoints)
-
-                if (arcResult.isArc) {
-                    // 4. Verificar que la palma haya cambiado de orientación
-                    val palmOrientationChanged = checkPalmOrientationChange(landmarks)
-
-                    if (palmOrientationChanged) {
-                        val confidence = arcResult.confidence
-                        return LetterJValidationResult(true, "¡Arco completado!", confidence)
-                    } else {
-                        return LetterJValidationResult(false, "Continúa el movimiento en arco", arcResult.confidence)
-                    }
-                }
-
-                return LetterJValidationResult(false, "Mueve tu mano formando un arco", arcResult.confidence)
-            }
-
-            return LetterJValidationResult(false, "Mantén la posición y realiza el movimiento", 0.3f)
-
-        } catch (e: Exception) {
-            resetJTrajectory()
-            return LetterJValidationResult(false, "Error en validación", 0f)
-        }
-    }
-
-    /**
-     * Detecta si el conjunto de puntos forma un arco
-     */
-    private fun detectArcMovement(points: List<TrajectoryPoint>): ArcDetectionResult {
-        if (points.size < MIN_TRAJECTORY_POINTS) {
-            return ArcDetectionResult(false, 0f)
-        }
-
-        // Obtener puntos inicial, medio y final
-        val startPoint = points.first()
-        val endPoint = points.last()
-        val midIndex = points.size / 2
-        val midPoint = points[midIndex]
-
-        // Calcular el movimiento total
-        val totalMovement = distance(startPoint.x, startPoint.y, endPoint.x, endPoint.y)
-
-        if (totalMovement < MOVEMENT_THRESHOLD) {
-            return ArcDetectionResult(false, 0.2f)
-        }
-
-        // Verificar que el punto medio esté por encima (o desplazado) de la línea recta
-        // entre inicio y fin, característico de un arco
-        val arcHeight = calculateArcHeight(startPoint, midPoint, endPoint)
-
-        // Un arco debe tener una altura significativa
-        val isArc = arcHeight > 0.05f && totalMovement > MOVEMENT_THRESHOLD
-
-        // Calcular confianza basada en la suavidad del arco
-        val confidence = if (isArc) {
-            min(1.0f, (arcHeight * 10f + totalMovement * 3f))
-        } else {
-            min(0.5f, totalMovement / MOVEMENT_THRESHOLD * 0.3f)
-        }
-
-        return ArcDetectionResult(isArc, confidence)
-    }
-
-    /**
-     * Calcula la altura del arco respecto a la línea base
-     */
-    private fun calculateArcHeight(
-        start: TrajectoryPoint,
-        mid: TrajectoryPoint,
-        end: TrajectoryPoint
-    ): Float {
-        // Calcular la distancia perpendicular del punto medio a la línea inicio-fin
-        val lineLength = distance(start.x, start.y, end.x, end.y)
-
-        if (lineLength < 0.01f) return 0f
-
-        // Fórmula de distancia punto a línea
-        val numerator = abs(
-            (end.y - start.y) * mid.x -
-            (end.x - start.x) * mid.y +
-            end.x * start.y -
-            end.y * start.x
-        )
-
-        return numerator / lineLength
-    }
-
-    /**
-     * Verifica si la orientación de la palma ha cambiado durante el movimiento
-     */
-    private fun checkPalmOrientationChange(
-        landmarks: List<com.google.mediapipe.tasks.components.containers.NormalizedLandmark>
-    ): Boolean {
-        // Para simplificar, verificamos la posición relativa de la muñeca respecto a los dedos
-        val wrist = landmarks[0]
-        val middleMcp = landmarks[9]
-
-        // Si la muñeca está significativamente más arriba que el MCP del dedo medio,
-        // significa que la mano ha rotado
-        return wrist.y() < middleMcp.y() - 0.05f
-    }
-
-    /**
-     * Resetea el rastreo de trayectoria para la letra J
-     */
-    fun resetJTrajectory() {
-        trajectoryPoints.clear()
-        arcDetectionStarted = false
-        lastTrajectoryTime = 0L
-    }
 
     /**
      * Valida si la seña corresponde a la letra Z
@@ -465,20 +310,9 @@ class VowelSignValidator {
     }
 
     // Clases de datos para resultados
-    data class LetterJValidationResult(
-        val isValid: Boolean,
-        val message: String,
-        val confidence: Float
-    )
-
     data class LetterZValidationResult(
         val isValid: Boolean,
         val message: String,
-        val confidence: Float
-    )
-
-    private data class ArcDetectionResult(
-        val isArc: Boolean,
         val confidence: Float
     )
 

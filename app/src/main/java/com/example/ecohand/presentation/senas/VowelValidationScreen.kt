@@ -133,7 +133,6 @@ fun VowelValidationScreen(
             handDetector.close()
             faceDetector.close()
             // Limpiar trayectorias de letras con movimiento
-            vowelValidator.resetJTrajectory()
             vowelValidator.resetZTrajectory()
         }
     }
@@ -381,7 +380,6 @@ fun VowelValidationScreen(
                             "I" -> "Extiende solo el meñique hacia arriba, mantén los demás dedos cerrados"
                             "O" -> "Forma un círculo con todos los dedos, juntando las puntas"
                             "U" -> "Extiende índice y meñique hacia arriba, cierra medio, anular y pulgar"
-                            "J" -> "Extiende solo el meñique y mueve tu mano formando un arco, desde palma adelante hasta palma atrás"
                             "Z" -> "Extiende solo el índice y traza una Z en el aire: línea horizontal → diagonal → línea horizontal"
                             else -> "Realiza la seña correspondiente a la vocal seleccionada"
                         },
@@ -603,15 +601,6 @@ private fun validateVowelSign(
             return ValidationState.Waiting
         }
 
-        // Manejo especial para la letra J (requiere movimiento)
-        if (vowel.uppercase() == "J") {
-            val jResult = validator.validateLetterJ(handResult)
-            return if (jResult.isValid) {
-                ValidationState.Success
-            } else {
-                ValidationState.Error(jResult.message)
-            }
-        }
 
         // Manejo especial para la letra Z (requiere movimiento)
         if (vowel.uppercase() == "Z") {

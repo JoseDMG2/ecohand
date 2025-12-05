@@ -244,7 +244,7 @@ fun MainNavHost(
                     navController.navigate(Screen.AyudaSoporte.route)
                 },
                 onNavigateToDetectionTest = {
-                    navController.navigate(Screen.VowelSelection.route)
+                    navController.navigate(Screen.CategorySelection.route)
                 }
             )
         }
@@ -285,8 +285,24 @@ fun MainNavHost(
         }
 
         // Pantallas de validación de señas
-        composable(Screen.VowelSelection.route) {
+        composable(Screen.CategorySelection.route) {
+            com.example.ecohand.presentation.senas.CategorySelectionScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onCategorySelected = { category ->
+                    navController.navigate(Screen.VowelSelection.createRoute(category))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.VowelSelection.route,
+            arguments = listOf(
+                navArgument("category") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val category = backStackEntry.arguments?.getString("category") ?: "Alfabeto"
             com.example.ecohand.presentation.senas.VowelSelectionScreen(
+                category = category,
                 onNavigateBack = { navController.popBackStack() },
                 onVowelSelected = { vowel ->
                     navController.navigate(Screen.VowelValidation.createRoute(vowel))

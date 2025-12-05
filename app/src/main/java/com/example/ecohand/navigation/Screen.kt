@@ -25,8 +25,12 @@ sealed class Screen(val route: String) {
 
     // Pantalla de prueba de detección
     object DetectionTest : Screen("detection_test")
+
     // Pantallas de validación de señas
-    object VowelSelection : Screen("vowel_selection")
+    object CategorySelection : Screen("category_selection")
+    object VowelSelection : Screen("vowel_selection/{category}") {
+        fun createRoute(category: String) = "vowel_selection/$category"
+    }
     object VowelValidation : Screen("vowel_validation/{vowel}") {
         fun createRoute(vowel: String) = "vowel_validation/$vowel"
     }
