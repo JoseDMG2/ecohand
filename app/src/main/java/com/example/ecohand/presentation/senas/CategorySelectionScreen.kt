@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -44,18 +45,11 @@ fun CategorySelectionScreen(
             itemCount = 1
         ),
         CategoryInfo(
-            name = "Adverbios",
-            description = "Señas de adverbios",
-            icon = Icons.Default.Info,
-            available = false,
-            itemCount = 0
-        ),
-        CategoryInfo(
-            name = "Verbos",
-            description = "Acciones y verbos",
-            icon = Icons.Default.Build,
-            available = false,
-            itemCount = 0
+            name = "Números",
+            description = "Números del 0 al 5 en LSP",
+            icon = Icons.Default.Phone,
+            available = true,
+            itemCount = 6 // 0, 1, 2, 3, 4, 5
         )
     )
 

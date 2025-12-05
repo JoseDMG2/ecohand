@@ -311,6 +311,155 @@ class VowelSignValidator {
     }
 
     /**
+     * Valida si la seña corresponde al número 0 (CERO)
+     * Características: Todos los dedos extendidos pero curvados formando un círculo/óvalo,
+     * con las puntas de los dedos tocando la punta del pulgar (similar a la letra O)
+     */
+    fun validateNumber0(handResult: HandLandmarkerResult): Boolean {
+        if (handResult.landmarks().isEmpty()) return false
+
+        val landmarks = handResult.landmarks()[0]
+
+        try {
+            // Verificar que los dedos formen una forma circular
+            // El pulgar debe tocar aproximadamente las puntas de los demás dedos
+            val fingertipsClose = areFingertipsFormingCircle(landmarks)
+
+            // Los dedos no deben estar completamente extendidos ni completamente cerrados
+            val fingersPartiallyExtended = areFingersCurvedForO(landmarks)
+
+            return fingertipsClose && fingersPartiallyExtended
+        } catch (e: Exception) {
+            return false
+        }
+    }
+
+    /**
+     * Valida si la seña corresponde al número 1 (UNO)
+     * Características: Solo el dedo índice extendido hacia arriba, demás dedos cerrados
+     */
+    fun validateNumber1(handResult: HandLandmarkerResult): Boolean {
+        if (handResult.landmarks().isEmpty()) return false
+
+        val landmarks = handResult.landmarks()[0]
+
+        try {
+            // Verificar que solo el índice esté extendido
+            val isIndexExtended = isFingerExtended(landmarks, FingerType.INDEX)
+            val isThumbClosed = !isThumbExtended(landmarks)
+            val isMiddleClosed = !isFingerExtended(landmarks, FingerType.MIDDLE)
+            val isRingClosed = !isFingerExtended(landmarks, FingerType.RING)
+            val isPinkyClosed = !isFingerExtended(landmarks, FingerType.PINKY)
+
+            return isIndexExtended && isThumbClosed && isMiddleClosed && isRingClosed && isPinkyClosed
+        } catch (e: Exception) {
+            return false
+        }
+    }
+
+    /**
+     * Valida si la seña corresponde al número 2 (DOS)
+     * Características: Dedos índice y medio extendidos hacia arriba formando una V
+     */
+    fun validateNumber2(handResult: HandLandmarkerResult): Boolean {
+        if (handResult.landmarks().isEmpty()) return false
+
+        val landmarks = handResult.landmarks()[0]
+
+        try {
+            // Verificar que índice y medio estén extendidos
+            val isIndexExtended = isFingerExtended(landmarks, FingerType.INDEX)
+            val isMiddleExtended = isFingerExtended(landmarks, FingerType.MIDDLE)
+
+            // Verificar que los demás dedos estén cerrados
+            val isThumbClosed = !isThumbExtended(landmarks)
+            val isRingClosed = !isFingerExtended(landmarks, FingerType.RING)
+            val isPinkyClosed = !isFingerExtended(landmarks, FingerType.PINKY)
+
+            return isIndexExtended && isMiddleExtended &&
+                   isThumbClosed && isRingClosed && isPinkyClosed
+        } catch (e: Exception) {
+            return false
+        }
+    }
+
+    /**
+     * Valida si la seña corresponde al número 3 (TRES)
+     * Características: Dedos índice, medio y anular extendidos hacia arriba
+     */
+    fun validateNumber3(handResult: HandLandmarkerResult): Boolean {
+        if (handResult.landmarks().isEmpty()) return false
+
+        val landmarks = handResult.landmarks()[0]
+
+        try {
+            // Verificar que índice, medio y anular estén extendidos
+            val isIndexExtended = isFingerExtended(landmarks, FingerType.INDEX)
+            val isMiddleExtended = isFingerExtended(landmarks, FingerType.MIDDLE)
+            val isRingExtended = isFingerExtended(landmarks, FingerType.RING)
+
+            // Verificar que pulgar y meñique estén cerrados
+            val isThumbClosed = !isThumbExtended(landmarks)
+            val isPinkyClosed = !isFingerExtended(landmarks, FingerType.PINKY)
+
+            return isIndexExtended && isMiddleExtended && isRingExtended &&
+                   isThumbClosed && isPinkyClosed
+        } catch (e: Exception) {
+            return false
+        }
+    }
+
+    /**
+     * Valida si la seña corresponde al número 4 (CUATRO)
+     * Características: Los cuatro dedos extendidos hacia arriba, pulgar doblado hacia la palma
+     */
+    fun validateNumber4(handResult: HandLandmarkerResult): Boolean {
+        if (handResult.landmarks().isEmpty()) return false
+
+        val landmarks = handResult.landmarks()[0]
+
+        try {
+            // Verificar que los cuatro dedos (índice, medio, anular, meñique) estén extendidos
+            val isIndexExtended = isFingerExtended(landmarks, FingerType.INDEX)
+            val isMiddleExtended = isFingerExtended(landmarks, FingerType.MIDDLE)
+            val isRingExtended = isFingerExtended(landmarks, FingerType.RING)
+            val isPinkyExtended = isFingerExtended(landmarks, FingerType.PINKY)
+
+            // Verificar que el pulgar esté cerrado/doblado
+            val isThumbClosed = !isThumbExtended(landmarks)
+
+            return isIndexExtended && isMiddleExtended && isRingExtended &&
+                   isPinkyExtended && isThumbClosed
+        } catch (e: Exception) {
+            return false
+        }
+    }
+
+    /**
+     * Valida si la seña corresponde al número 5 (CINCO)
+     * Características: Todos los dedos extendidos y separados, mano abierta completa
+     */
+    fun validateNumber5(handResult: HandLandmarkerResult): Boolean {
+        if (handResult.landmarks().isEmpty()) return false
+
+        val landmarks = handResult.landmarks()[0]
+
+        try {
+            // Verificar que TODOS los dedos estén extendidos
+            val isThumbExtended = isThumbExtended(landmarks)
+            val isIndexExtended = isFingerExtended(landmarks, FingerType.INDEX)
+            val isMiddleExtended = isFingerExtended(landmarks, FingerType.MIDDLE)
+            val isRingExtended = isFingerExtended(landmarks, FingerType.RING)
+            val isPinkyExtended = isFingerExtended(landmarks, FingerType.PINKY)
+
+            return isThumbExtended && isIndexExtended && isMiddleExtended &&
+                   isRingExtended && isPinkyExtended
+        } catch (e: Exception) {
+            return false
+        }
+    }
+
+    /**
      * Valida si la seña corresponde a "Amigo"
      * Características SIMPLIFICADAS: Una mano arriba y otra abajo, cerca una de la otra
      */
