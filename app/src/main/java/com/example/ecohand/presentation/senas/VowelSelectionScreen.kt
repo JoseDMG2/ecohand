@@ -34,6 +34,9 @@ fun VowelSelectionScreen(
             VowelInfo("U", "Índice y meñique extendidos hacia arriba"),
             VowelInfo("Z", "Índice extendido trazando una Z (requiere movimiento)")
         )
+        "Relaciones Familiares" -> listOf(
+            VowelInfo("Amigo", "Coloca una mano arriba y otra abajo, cerca")
+        )
         else -> emptyList() // Otras categorías próximamente
     }
 
@@ -145,7 +148,7 @@ fun VowelCard(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = vowelInfo.letter,
+                    text = vowelInfo.letter.take(1),
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -162,7 +165,7 @@ fun VowelCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Letra ${vowelInfo.letter}",
+                        text = vowelInfo.letter,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface

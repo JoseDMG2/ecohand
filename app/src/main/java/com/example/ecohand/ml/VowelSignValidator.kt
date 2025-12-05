@@ -219,6 +219,7 @@ class VowelSignValidator {
         }
     }
 
+
     /**
      * Detecta si el conjunto de puntos forma una Z
      * Una Z consiste en: línea horizontal superior → diagonal descendente → línea horizontal inferior
@@ -308,6 +309,78 @@ class VowelSignValidator {
         zTrajectoryPoints.clear()
         zDetectionStarted = false
     }
+
+    /**
+     * Valida si la seña corresponde a "Amigo"
+     * Características SIMPLIFICADAS: Una mano arriba y otra abajo, cerca una de la otra
+     */
+    fun validateSignAmigo(handResult: HandLandmarkerResult): SignAmigoValidationResult {
+        // Verificar que se detecten exactamente DOS manos
+        if (handResult.landmarks().size != 2) {
+            return SignAmigoValidationResult(
+                false,
+                if (handResult.landmarks().isEmpty()) {
+                    "Muestra ambas manos a la cámara"
+                } else {
+                    "Muestra AMBAS manos para la seña de 'Amigo'"
+                },
+                0f
+            )
+        }
+
+        try {
+            val hand1 = handResult.landmarks()[0]
+            val hand2 = handResult.landmarks()[1]
+
+            // Obtener las muñecas de ambas manos
+            val wrist1 = hand1[0]
+            val wrist2 = hand2[0]
+
+            // 1. SOLO verificar que una mano esté arriba y otra abajo (diferencia en Y)
+            val verticalDistance = abs(wrist1.y() - wrist2.y())
+            val oneAboveOther = verticalDistance > 0.03f // Mínima diferencia de altura
+
+            if (!oneAboveOther) {
+                return SignAmigoValidationResult(
+                    false,
+                    "Coloca una mano arriba y otra abajo",
+                    0.3f
+                )
+            }
+
+            // 2. SOLO verificar que las manos estén CERCA horizontalmente (aproximadamente alineadas)
+            val horizontalDistance = abs(wrist1.x() - wrist2.x())
+            val areClose = horizontalDistance < 0.25f // MUY permisivo
+
+            if (!areClose) {
+                return SignAmigoValidationResult(
+                    false,
+                    "Acerca más las manos",
+                    0.6f
+                )
+            }
+
+            // ¡Eso es todo! Si llegó aquí, la seña es válida
+            return SignAmigoValidationResult(
+                true,
+                "¡Perfecto! Seña de 'Amigo' completada",
+                1.0f
+            )
+
+        } catch (e: Exception) {
+            return SignAmigoValidationResult(
+                false,
+                "Error en la validación",
+                0f
+            )
+        }
+    }
+
+    data class SignAmigoValidationResult(
+        val isValid: Boolean,
+        val message: String,
+        val confidence: Float
+    )
 
     // Clases de datos para resultados
     data class LetterZValidationResult(

@@ -82,7 +82,7 @@ fun VowelValidationScreen(
         HandDetector(
             context = context,
             runningMode = RunningMode.LIVE_STREAM,
-            maxNumHands = 1 // Solo necesitamos una mano para validar
+            maxNumHands = 2 // Detectar hasta 2 manos (necesario para señas como "Amigo")
         )
     }
 
@@ -142,7 +142,7 @@ fun VowelValidationScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Validar Letra $vowel",
+                        text = "Validar: $vowel",
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp
                     )
@@ -286,7 +286,7 @@ fun VowelValidationScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Has realizado correctamente la seña de la letra $vowel",
+                        text = "Has realizado correctamente la seña: $vowel",
                         textAlign = TextAlign.Center,
                         fontSize = 16.sp
                     )
@@ -381,7 +381,8 @@ fun VowelValidationScreen(
                             "O" -> "Forma un círculo con todos los dedos, juntando las puntas"
                             "U" -> "Extiende índice y meñique hacia arriba, cierra medio, anular y pulgar"
                             "Z" -> "Extiende solo el índice y traza una Z en el aire: línea horizontal → diagonal → línea horizontal"
-                            else -> "Realiza la seña correspondiente a la vocal seleccionada"
+                            "AMIGO" -> "Muy simple: muestra ambas manos, coloca una arriba y otra abajo, que estén cerca. ¡Eso es todo!"
+                            else -> "Realiza la seña correspondiente seleccionada"
                         },
                         fontSize = 14.sp,
                         lineHeight = 20.sp
@@ -597,6 +598,16 @@ private fun validateVowelSign(
     validator: VowelSignValidator
 ): ValidationState {
     return try {
+        // Manejo especial para "Amigo" (requiere dos manos)
+        if (vowel.uppercase() == "AMIGO") {
+            val amigoResult = validator.validateSignAmigo(handResult)
+            return if (amigoResult.isValid) {
+                ValidationState.Success
+            } else {
+                ValidationState.Error(amigoResult.message)
+            }
+        }
+
         if (handResult.landmarks().isEmpty()) {
             return ValidationState.Waiting
         }

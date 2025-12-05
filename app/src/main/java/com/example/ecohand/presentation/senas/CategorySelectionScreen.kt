@@ -40,8 +40,8 @@ fun CategorySelectionScreen(
             name = "Relaciones Familiares",
             description = "Señas sobre la familia",
             icon = Icons.Default.Person,
-            available = false,
-            itemCount = 0
+            available = true,
+            itemCount = 1
         ),
         CategoryInfo(
             name = "Adverbios",
