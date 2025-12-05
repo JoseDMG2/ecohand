@@ -214,6 +214,10 @@ fun MainNavHost(
                             // Alfabeto → Lista de validación A, I, Z
                             navController.navigate(Screen.LeccionListaValidacion.createRoute(2))
                         }
+                        3 -> {
+                            // Números → Lista de validación 0, 3, 5
+                            navController.navigate(Screen.LeccionListaValidacion.createRoute(3))
+                        }
                         else -> {
                             // Otras lecciones → Práctica normal
                             navController.navigate(Screen.LeccionPractica.createRoute(id))
@@ -248,6 +252,11 @@ fun MainNavHost(
                     com.example.ecohand.presentation.lecciones.SenaItem("A", "Pulgar extendido hacia afuera"),
                     com.example.ecohand.presentation.lecciones.SenaItem("I", "Solo meñique extendido"),
                     com.example.ecohand.presentation.lecciones.SenaItem("Z", "Índice trazando una Z")
+                )
+                3 -> listOf(
+                    com.example.ecohand.presentation.lecciones.SenaItem("0", "Dedos formando un círculo"),
+                    com.example.ecohand.presentation.lecciones.SenaItem("3", "Tres dedos extendidos"),
+                    com.example.ecohand.presentation.lecciones.SenaItem("5", "Mano abierta completa")
                 )
                 else -> emptyList()
             }
