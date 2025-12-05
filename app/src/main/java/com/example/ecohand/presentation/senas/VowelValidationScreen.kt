@@ -41,13 +41,16 @@ import com.example.ecohand.presentation.components.DetectionOverlay
 import com.google.mediapipe.tasks.vision.core.RunningMode
 import com.google.mediapipe.tasks.vision.facelandmarker.FaceLandmarkerResult
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarkerResult
+import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VowelValidationScreen(
     vowel: String,
-    onNavigateBack: () -> Unit
+    leccionId: Int? = null,
+    onNavigateBack: () -> Unit,
+    onLeccionCompletada: () -> Unit = {}
 ) {
     val context = LocalContext.current
 
@@ -95,6 +98,18 @@ fun VowelValidationScreen(
     }
 
     val vowelValidator = remember { VowelSignValidator() }
+
+    // Scope para completar la lección
+    val scope = rememberCoroutineScope()
+    val database = remember { com.example.ecohand.data.local.database.EcoHandDatabase.getDatabase(context) }
+    val leccionRepository = remember {
+        com.example.ecohand.data.repository.LeccionRepository(
+            database.leccionDao(),
+            database.progresoLeccionDao(),
+            database.estadisticasUsuarioDao()
+        )
+    }
+    val userSession = remember { com.example.ecohand.data.session.UserSession.getInstance(context) }
 
     // Inicializar detectores
     LaunchedEffect(Unit) {
@@ -296,7 +311,21 @@ fun VowelValidationScreen(
                 Button(
                     onClick = {
                         showSuccessDialog = false
-                        onNavigateBack()
+                        // Si viene desde una lección, completarla
+                        if (leccionId != null) {
+                            scope.launch {
+                                try {
+                                    val usuarioId = userSession.getUserId()
+                                    leccionRepository.completarLeccion(usuarioId, leccionId)
+                                    onLeccionCompletada()
+                                } catch (e: Exception) {
+                                    // En caso de error, igual navegar de vuelta
+                                    onLeccionCompletada()
+                                }
+                            }
+                        } else {
+                            onNavigateBack()
+                        }
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF4CAF50)

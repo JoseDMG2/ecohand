@@ -31,7 +31,10 @@ sealed class Screen(val route: String) {
     object VowelSelection : Screen("vowel_selection/{category}") {
         fun createRoute(category: String) = "vowel_selection/$category"
     }
-    object VowelValidation : Screen("vowel_validation/{vowel}") {
-        fun createRoute(vowel: String) = "vowel_validation/$vowel"
+    object VowelValidation : Screen("vowel_validation/{vowel}?leccionId={leccionId}") {
+        fun createRoute(vowel: String, leccionId: Int? = null): String {
+            val leccionIdParam = leccionId ?: -1
+            return "vowel_validation/$vowel?leccionId=$leccionIdParam"
+        }
     }
 }

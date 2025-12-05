@@ -205,7 +205,12 @@ fun MainNavHost(
                 leccionId = leccionId,
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToPractica = { id ->
-                    navController.navigate(Screen.LeccionPractica.createRoute(id))
+                    // Si es la lección de "Saludos Básicos" (ID 1), ir a validación de "Hola"
+                    if (id == 1) {
+                        navController.navigate(Screen.VowelValidation.createRoute("Hola", leccionId = 1))
+                    } else {
+                        navController.navigate(Screen.LeccionPractica.createRoute(id))
+                    }
                 }
             )
         }
@@ -318,13 +323,24 @@ fun MainNavHost(
         composable(
             route = Screen.VowelValidation.route,
             arguments = listOf(
-                navArgument("vowel") { type = NavType.StringType }
+                navArgument("vowel") { type = NavType.StringType },
+                navArgument("leccionId") {
+                    type = NavType.IntType
+                    defaultValue = -1
+                }
             )
         ) { backStackEntry ->
             val vowel = backStackEntry.arguments?.getString("vowel") ?: "A"
+            val leccionIdArg = backStackEntry.arguments?.getInt("leccionId") ?: -1
+            val leccionId = if (leccionIdArg > 0) leccionIdArg else null
             com.example.ecohand.presentation.senas.VowelValidationScreen(
                 vowel = vowel,
-                onNavigateBack = { navController.popBackStack() }
+                leccionId = leccionId,
+                onNavigateBack = { navController.popBackStack() },
+                onLeccionCompletada = {
+                    // Volver a la lista de lecciones
+                    navController.popBackStack(Screen.Lecciones.route, inclusive = false)
+                }
             )
         }
     }
