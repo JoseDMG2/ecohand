@@ -382,6 +382,7 @@ fun VowelValidationScreen(
                             "U" -> "Extiende índice y meñique hacia arriba, cierra medio, anular y pulgar"
                             "Z" -> "Extiende solo el índice y traza una Z en el aire: línea horizontal → diagonal → línea horizontal"
                             "AMIGO" -> "Muy simple: muestra ambas manos, coloca una arriba y otra abajo, que estén cerca. ¡Eso es todo!"
+                            "HOLA" -> "Abre la mano con todos los dedos extendidos y muévela lateralmente de izquierda a derecha (o viceversa) como si estuvieras saludando"
                             "0" -> "Forma un círculo con todos los dedos curvados, juntando las puntas de los dedos (índice, medio, anular y meñique) con la punta del pulgar"
                             "1" -> "Extiende solo el dedo índice hacia arriba, mantén los demás dedos cerrados"
                             "2" -> "Extiende los dedos índice y medio hacia arriba formando una V, cierra el pulgar, anular y meñique"
@@ -611,6 +612,16 @@ private fun validateVowelSign(
                 ValidationState.Success
             } else {
                 ValidationState.Error(amigoResult.message)
+            }
+        }
+
+        // Manejo especial para "Hola" (requiere movimiento lateral)
+        if (vowel.uppercase() == "HOLA") {
+            val holaResult = validator.validateSignHola(handResult)
+            return if (holaResult.isValid) {
+                ValidationState.Success
+            } else {
+                ValidationState.Error(holaResult.message)
             }
         }
 

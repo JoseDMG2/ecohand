@@ -531,6 +531,134 @@ class VowelSignValidator {
         val confidence: Float
     )
 
+    // Variables para rastrear el movimiento de "Hola"
+    private val holaTrajectoryPoints = mutableListOf<TrajectoryPoint>()
+    private var holaDetectionStarted = false
+
+    /**
+     * Valida si la seña corresponde a "Hola"
+     * Características: Mano con todos los dedos extendidos, movimiento lateral de izquierda a derecha
+     */
+    fun validateSignHola(handResult: HandLandmarkerResult): SignHolaValidationResult {
+        if (handResult.landmarks().isEmpty()) {
+            resetHolaTrajectory()
+            return SignHolaValidationResult(false, "Muestra tu mano a la cámara", 0f)
+        }
+
+        val landmarks = handResult.landmarks()[0]
+
+        try {
+            // 1. Verificar que todos los dedos estén extendidos (mano abierta)
+            val isThumbExtended = isThumbExtended(landmarks)
+            val isIndexExtended = isFingerExtended(landmarks, FingerType.INDEX)
+            val isMiddleExtended = isFingerExtended(landmarks, FingerType.MIDDLE)
+            val isRingExtended = isFingerExtended(landmarks, FingerType.RING)
+            val isPinkyExtended = isFingerExtended(landmarks, FingerType.PINKY)
+
+            val allFingersExtended = isThumbExtended && isIndexExtended &&
+                                    isMiddleExtended && isRingExtended && isPinkyExtended
+
+            if (!allFingersExtended) {
+                resetHolaTrajectory()
+                return SignHolaValidationResult(
+                    false,
+                    "Extiende todos los dedos (mano abierta)",
+                    0f
+                )
+            }
+
+            // 2. Rastrear el movimiento de la mano (usamos la muñeca)
+            val wrist = landmarks[0] // Muñeca
+            val currentTime = System.currentTimeMillis()
+
+            // Añadir punto a la trayectoria
+            holaTrajectoryPoints.add(TrajectoryPoint(wrist.x(), wrist.y(), currentTime))
+
+            // Limpiar puntos antiguos (más de 2 segundos)
+            holaTrajectoryPoints.removeAll { currentTime - it.timestamp > 2000 }
+
+            // 3. Verificar si hay suficientes puntos para validar el movimiento
+            if (holaTrajectoryPoints.size >= MIN_TRAJECTORY_POINTS) {
+                val holaResult = detectLateralMovement(holaTrajectoryPoints)
+
+                if (holaResult.isLateral) {
+                    return SignHolaValidationResult(
+                        true,
+                        "¡Perfecto! Seña de 'Hola' completada",
+                        holaResult.confidence
+                    )
+                }
+
+                return SignHolaValidationResult(
+                    false,
+                    "Mueve la mano de izquierda a derecha",
+                    holaResult.confidence
+                )
+            }
+
+            return SignHolaValidationResult(
+                false,
+                "Mantén la mano abierta y muévela lateralmente",
+                0.3f
+            )
+
+        } catch (e: Exception) {
+            resetHolaTrajectory()
+            return SignHolaValidationResult(false, "Error en validación", 0f)
+        }
+    }
+
+    /**
+     * Detecta si el conjunto de puntos representa un movimiento lateral
+     * (de izquierda a derecha o derecha a izquierda)
+     */
+    private fun detectLateralMovement(points: List<TrajectoryPoint>): LateralMovementResult {
+        if (points.size < MIN_TRAJECTORY_POINTS) {
+            return LateralMovementResult(false, 0f)
+        }
+
+        val startPoint = points.first()
+        val endPoint = points.last()
+
+        // Calcular desplazamiento horizontal y vertical
+        val horizontalMovement = abs(endPoint.x - startPoint.x)
+        val verticalMovement = abs(endPoint.y - startPoint.y)
+
+        // El movimiento debe ser predominantemente horizontal
+        val isLateral = horizontalMovement > verticalMovement && horizontalMovement > 0.15f
+
+        // Calcular confianza basada en qué tan horizontal es el movimiento
+        var confidence = 0f
+        if (isLateral) {
+            val ratio = horizontalMovement / (verticalMovement + 0.01f) // Evitar división por 0
+            confidence = min(1.0f, ratio / 3.0f) // Normalizar
+        } else {
+            // Dar confianza parcial si hay algo de movimiento horizontal
+            confidence = min(0.6f, horizontalMovement / 0.15f)
+        }
+
+        return LateralMovementResult(isLateral, confidence)
+    }
+
+    /**
+     * Resetea el rastreo de trayectoria para la seña "Hola"
+     */
+    fun resetHolaTrajectory() {
+        holaTrajectoryPoints.clear()
+        holaDetectionStarted = false
+    }
+
+    data class SignHolaValidationResult(
+        val isValid: Boolean,
+        val message: String,
+        val confidence: Float
+    )
+
+    private data class LateralMovementResult(
+        val isLateral: Boolean,
+        val confidence: Float
+    )
+
     // Clases de datos para resultados
     data class LetterZValidationResult(
         val isValid: Boolean,

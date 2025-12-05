@@ -35,7 +35,8 @@ fun VowelSelectionScreen(
             VowelInfo("Z", "Índice extendido trazando una Z (requiere movimiento)")
         )
         "Relaciones Familiares" -> listOf(
-            VowelInfo("Amigo", "Coloca una mano arriba y otra abajo, cerca")
+            VowelInfo("Amigo", "Coloca una mano arriba y otra abajo, cerca"),
+            VowelInfo("Hola", "Mano con todos los dedos extendidos, muévela de izquierda a derecha")
         )
         "Números" -> listOf(
             VowelInfo("0", "Todos los dedos curvados formando un círculo, puntas de los dedos tocando la punta del pulgar"),

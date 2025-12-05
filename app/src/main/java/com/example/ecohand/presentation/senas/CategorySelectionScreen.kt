@@ -42,7 +42,7 @@ fun CategorySelectionScreen(
             description = "Señas sobre la familia",
             icon = Icons.Default.Person,
             available = true,
-            itemCount = 1
+            itemCount = 2 // Amigo, Hola
         ),
         CategoryInfo(
             name = "Números",
